@@ -1,0 +1,4 @@
+build/
+.vscode/
+.mxproject
+CMakePresets.json

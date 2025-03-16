@@ -1,0 +1,24 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+
+		{
+			"name": "openocd",
+			"type": "cortex-debug",
+			"request": "launch",
+			"cwd": "${workspaceRoot}",
+			"runToEntryPoint": "main",
+			"servertype": "openocd",
+			//"preLaunchTask": "build",
+            "serverpath":  "openocd",   
+            //"serverpath":  "/usr/sbin/xpack-openocd-0.11.0-4/bin/openocd",               
+			"gdbPath": "/opt/arm/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-gdb", 
+			"executable": "${workspaceRoot}/build/pdm.elf", //"executable":"${command:make}",//
+			"svdFile": "STM32F103.svd",
+			"configFiles": [
+                "${workspaceRoot}/openocd.cfg"				
+			],
+			"showDevDebugOutput": "raw"
+		}
+	]
+}
