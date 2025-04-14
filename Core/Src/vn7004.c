@@ -33,6 +33,7 @@ typedef struct {
     const uint32_t ovc_lock_time;
 
     int enable;
+    int poll_index;
     vn7004_stat_t status;
     vn7004_stat_t state;  
     uint32_t counter;
@@ -53,9 +54,18 @@ int vn7004_init(vn7004_t *vn_7004_p, uint32_t cnt) {
 
 void vn7004_poll(){
     uint32_t tick = HAL_GetTickCount();
+    static uint32_t poll_cnt = 0;
+    poll_cnt++;
+
     for(uint32_t i=0; i<vn7004_count; i++){
         vn7004_t *vn = &vn_7004[i];
-
+        int curr_valid = 0;
+        if ((vn->cs_common == -1) || ((poll_cnt == 1) && (vn->poll_index == i))){
+            vn_7004[vn->cs_common].poll_index = vn->cs_common;
+            poll_cnt = 0;
+            curr_valid = 1;
+        }
+        
         vn->current_ma = vn->current;
 
         if (vn->enable == 0){
@@ -88,21 +98,24 @@ void vn7004_poll(){
             }
             break;
 
-        case vn7004_state_on:       
-            if (vn->current_ma < vn->max_current) {
-                vn->counter = tick;
+        case vn7004_state_on:
+            if ((vn->cs_common == -1)) {
+                if (vn->current_ma < vn->max_current) {
+                    vn->counter = tick;
+                }
+                if (vn->current_ma > vn7004_short_current) {
+                    vn->counter = tick;
+                    gpio_set(vn->en_pin, 0);    
+                    vn->state = vn7004_state_short_gnd;
+                }
+                if ((vn->counter - tick) > vn->max_current_time) {
+                    vn->counter = tick;
+                    gpio_set(vn->en_pin, 0);    
+                    vn->state = vn7004_state_ocp;
+                }
+                break;
             }
-            if (vn->current_ma > vn7004_short_current) {
-                vn->counter = tick;
-                gpio_set(vn->en_pin, 0);    
-                vn->state = vn7004_state_short_gnd;
-            }
-            if ((vn->counter - tick) > vn->max_current_time) {
-                vn->counter = tick;
-                gpio_set(vn->en_pin, 0);    
-                vn->state = vn7004_state_ocp;
-            }
-            break;
+
 
         case vn7004_state_short_gnd:
         case vn7004_state_ocp:       
