@@ -661,7 +661,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-uint32_t acc = 0;
+
 uint32_t volt;
 /* USER CODE END 4 */
 
@@ -683,7 +683,6 @@ void StartCANTask(void const * argument)
   for(;;)
   {
     data[7] = volt;
-    data[1] = acc ? 0x55 : 0xaa;
     data[0]++;
     uint32_t mailbox=0;
     HAL_CAN_AddTxMessage(&hcan, &can_header, data, &mailbox);
@@ -706,16 +705,12 @@ void StartInputTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    acc = HAL_GPIO_ReadPin(WATER_DET_GPIO_Port, WATER_DET_Pin);
     //#define WATER_DET_Pin GPIO_PIN_12
     //#define WATER_DET_GPIO_Port GPIOB
 
     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 
-    HAL_GPIO_WritePin(OUT1_SEN_GPIO_Port, OUT1_SEN_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(OUT2_SEN_GPIO_Port, OUT2_SEN_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(OUT1_H_GPIO_Port, OUT1_H_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(OUT2_H_GPIO_Port, OUT2_H_Pin, GPIO_PIN_SET);
+
 
     HAL_GPIO_WritePin(OUT6_H_GPIO_Port, OUT6_H_Pin, GPIO_PIN_SET);
 

@@ -6,6 +6,14 @@ static osStaticThreadDef_t CtlPDMControlBlock;
 static void StartCtlPDM(void const * argument);
 
 extern adc_t adc1;
+extern adc_t adc2;
+
+static pump_t pump = {
+    .enable_delay = 1000,
+    .disable_delay = 3000
+};
+
+int acc = 0;
 
 int app_init(){
     osThreadStaticDef(CtlPDM, StartCtlPDM, osPriorityHigh, 0, sizeof(CtlPDMBuffer)/4, CtlPDMBuffer, &CtlPDMControlBlock);
@@ -13,10 +21,13 @@ int app_init(){
     return 0;
 }
 
+int get_acc(){
+    return acc;
+}
 
 void StartCtlPDM(void const * argument) {
-
-
+    uint32_t volt_bat = 0;
+    int  over_voltage = 0, override_water = 0;
     ///HAL_ADCEx_Calibration_Start(&hadc1);
     //HAL_ADCEx_Calibration_Start(&hadc2);
         uint8_t water_level;
@@ -26,13 +37,37 @@ void StartCtlPDM(void const * argument) {
         if (ulTaskNotifyTake( pdTRUE, 100) == 0){
             continue;
         }
-        uint32_t volt = ADC1->JDR4 >> 4;
 
-        uint16_t temper;
+
+        uint16_t temper, val;
+        if (adc_get_ch(&adc2, 0, &val) == 0){
+            volt_bat = adc_convert(val, 3300, 20, 3, 0);
+            if (volt_bat > 10000) {
+                acc = 1;
+            }
+            if (volt_bat < 8000) {
+                acc = 0;
+            }
+            over_voltage = 0;
+            if (volt_bat > 16500){
+                acc = 0;
+                over_voltage = 1;
+            }
+        }
+
+
+
         if (adc_get_ch(&adc1, 0, &temper) == 0){
 
         }
         water_level = read_pin();
+
+        led(acc);
+        ctl_acc(acc, ADC1->JDR2);
+        
+        int pump_status = pump_algo(water_level);
+        ctl_pump(pump_status);
+
     }
 }
 
@@ -42,3 +77,35 @@ void adc1_cb(){
 }
 
 void adc2_cb(){}
+
+
+
+
+int pump_algo(int water_level){
+
+
+    if ((pump.disable == 1) || (get_acc() == 0)) {
+        pump.water_state = 0;
+        return 0;
+    }
+
+    if (pump.override){
+        pump.water_state = 1;        
+        return 1;
+    }
+
+    uint32_t time_now = xTaskGetTickCount();
+    
+    int water_edge = water_level ^ pump.water_level;
+    pump.water_level = water_level;
+
+    if (water_edge) {
+        pump.time = time_now;
+    }
+
+    if ((time_now - pump.time) >= (water_level ? pump.enable_delay : pump.disable_delay)){
+        pump.water_state = water_level;
+    }
+
+    return pump.water_state;
+}

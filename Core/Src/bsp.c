@@ -1,5 +1,8 @@
 #include "bsp.h"
 #include "app.h"
+#include "can.h"
+#include "main.h"
+
 void can_rx_cb (can_fifo_t *fifo);
 void can_tx_cb(uint8_t *tx_stot);
 
@@ -39,6 +42,55 @@ can_t can1 = {
     .rx_cmpl = can_rx_cb,
     .tx_cmpl = can_tx_cb
 };
+
+const gpio_t gpio_a[] = {
+    {
+        .port = GPIOA,
+        .pin = LL_GPIO_PIN_1,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },    
+    {
+        .port = GPIOA,
+        .pin = LL_GPIO_PIN_2,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },
+    {
+        .port = GPIOA,
+        .pin = LL_GPIO_PIN_3,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0            
+        }
+    },
+    {
+        .port = GPIOA,
+        .pin = LL_GPIO_PIN_4,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },
+};
+
+
 
 const gpio_t gpio_b[] = {
     {
@@ -108,6 +160,7 @@ int bsp_init(){
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC2);
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
     
+    rv |= gpio_init(gpio_a, sizeof(gpio_a) / sizeof(gpio_t));    
     rv |= gpio_init(gpio_b, sizeof(gpio_b) / sizeof(gpio_t));
     rv |= gpio_init(gpio_c, sizeof(gpio_c) / sizeof(gpio_t));
 
@@ -137,6 +190,52 @@ uint8_t read_pin(){
     return pin_status;
 }
 
+void led(int stat){
+    gpio_set(&gpio_c[0], stat);
+}
+
+void ctl_pump(int stat){
+
+    gpio_set(&gpio_a[0], 1);    
+    gpio_set(&gpio_a[1], stat);
+}
+
+void ctl_acc(int stat, uint16_t current){
+    static uint32_t ovc_cnt = 0;
+    static int stat_ovc_protect = 0;
+    if (stat == 0){
+        stat_ovc_protect = 0;
+    }
+
+    if (current > 1024){
+        ovc_cnt++;
+    }
+
+    if (ovc_cnt > 8) {
+        stat_ovc_protect = 1;
+    }
+
+    if (stat_ovc_protect) {
+        stat = 0;
+    }
+    gpio_set(&gpio_a[3], 1);    
+    gpio_set(&gpio_a[2], stat);
+}
+
+void ctl_light(int stat){
+
+}
+
+void ctl_can_bus(int stat){
+
+} 
+
 void start_adc(){
     LL_ADC_INJ_StartConversionExtTrig(adc1.a, LL_ADC_INJ_TRIG_EXT_RISING);
 }
+/*
+HAL_GPIO_WritePin(OUT1_SEN_GPIO_Port, OUT1_SEN_Pin, GPIO_PIN_SET);
+HAL_GPIO_WritePin(OUT2_SEN_GPIO_Port, OUT2_SEN_Pin, GPIO_PIN_SET);
+HAL_GPIO_WritePin(OUT1_H_GPIO_Port, OUT1_H_Pin, GPIO_PIN_SET);
+HAL_GPIO_WritePin(OUT2_H_GPIO_Port, OUT2_H_Pin, GPIO_PIN_SET);
+*/
