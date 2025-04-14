@@ -37,7 +37,8 @@ void StartCtlPDM(void const * argument) {
         if (ulTaskNotifyTake( pdTRUE, 100) == 0){
             continue;
         }
-
+        
+        vn7004_poll();
 
         uint16_t temper, val;
         if (adc_get_ch(&adc2, 0, &val) == 0){
@@ -63,10 +64,10 @@ void StartCtlPDM(void const * argument) {
         water_level = read_pin();
 
         led(acc);
-        ctl_acc(acc, ADC1->JDR2);
+
         
         int pump_status = pump_algo(water_level);
-        ctl_pump(pump_status);
+
 
     }
 }

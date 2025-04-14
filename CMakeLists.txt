@@ -51,6 +51,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/app.c
     Core/Src/bsp.c
     Core/Src/nmea.c
+    Core/Src/vn7004.c    
 )
 
 # Add include paths

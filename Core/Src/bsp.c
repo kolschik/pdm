@@ -2,6 +2,7 @@
 #include "app.h"
 #include "can.h"
 #include "main.h"
+#include "vn7004.h"
 
 void can_rx_cb (can_fifo_t *fifo);
 void can_tx_cb(uint8_t *tx_stot);
@@ -88,11 +89,56 @@ const gpio_t gpio_a[] = {
             .init_val = 0
         }
     },
+    {
+        .port = GPIOA,
+        .pin = LL_GPIO_PIN_10,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },
 };
 
 
 
 const gpio_t gpio_b[] = {
+    {
+        .port = GPIOB,
+        .pin = LL_GPIO_PIN_3,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },  
+    {
+        .port = GPIOB,
+        .pin = LL_GPIO_PIN_4,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },  
+    {
+        .port = GPIOB,
+        .pin = LL_GPIO_PIN_5,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },  
+
     {
         .port = GPIOB,
         .pin = LL_GPIO_PIN_12,
@@ -150,6 +196,49 @@ tmr_cc_t tim1 = {
 };
 
 
+uint16_t current_key[4];
+
+vn7004_t key[4] = {
+    {
+        .en_pin = &gpio_a[0],
+        .csen_pin = &gpio_a[1],
+        .current = &current_key[0],
+        .cs_common = -1,
+        .max_current = 15000,
+        .max_current_time = 300,
+        .ovc_lock_time = 0
+    },
+    {
+        .en_pin = &gpio_a[2],
+        .csen_pin = &gpio_a[3],
+        .current = &current_key[1],
+        .cs_common = -1,
+        .max_current = 15000,
+        .max_current_time = 300,
+        .ovc_lock_time = 0
+    },
+    {
+        .en_pin = &gpio_b[2],
+        .csen_pin = &gpio_b[1],
+        .current = &current_key[2],
+        .cs_common = 3,
+        .max_current = 20000,
+        .max_current_time = 300,
+        .ovc_lock_time = 0
+    },
+    {
+        .en_pin = &gpio_b[0],
+        .csen_pin = &gpio_a[4],
+        .current = &current_key[3],
+        .cs_common = 2,
+        .max_current = 20000,
+        .max_current_time = 300,
+        .ovc_lock_time = 0
+    },        
+};
+
+
+
 
 int bsp_init(){
     int rv = 0;
@@ -173,7 +262,7 @@ int bsp_init(){
     /* USER CODE BEGIN 2 */
    // can_init(&can1);
    // can_start();
-
+   vn7004_init(key, sizeof(key) / sizeof(key[0]));
    // HAL_NVIC_SetPriority(CEC_CAN_IRQn, 4, 0);
   //  HAL_NVIC_EnableIRQ(CEC_CAN_IRQn);
     return rv;
@@ -185,7 +274,7 @@ void can_rx_cb (can_fifo_t *fifo){
 
 uint8_t read_pin(){
     uint8_t pin_status = 0;
-    pin_status |= gpio_read(&gpio_b[0]) << 0;
+    pin_status |= gpio_read(&gpio_b[3]) << 0;
     pin_status ^= 0x01;
     return pin_status;
 }
@@ -194,37 +283,6 @@ void led(int stat){
     gpio_set(&gpio_c[0], stat);
 }
 
-void ctl_pump(int stat){
-
-    gpio_set(&gpio_a[0], 1);    
-    gpio_set(&gpio_a[1], stat);
-}
-
-void ctl_acc(int stat, uint16_t current){
-    static uint32_t ovc_cnt = 0;
-    static int stat_ovc_protect = 0;
-    if (stat == 0){
-        stat_ovc_protect = 0;
-    }
-
-    if (current > 1024){
-        ovc_cnt++;
-    }
-
-    if (ovc_cnt > 8) {
-        stat_ovc_protect = 1;
-    }
-
-    if (stat_ovc_protect) {
-        stat = 0;
-    }
-    gpio_set(&gpio_a[3], 1);    
-    gpio_set(&gpio_a[2], stat);
-}
-
-void ctl_light(int stat){
-
-}
 
 void ctl_can_bus(int stat){
 
