@@ -18,103 +18,95 @@ typedef enum {
 }vn7004_state_t;
 
 
-static vn7004_t *vn_7004;
-static uint32_t vn7004_count;
-
 int vn7004_init(vn7004_t *vn_7004_p, uint32_t cnt) {
     if (vn_7004_p == 0) {
         return EINVAL;
     }
-    vn_7004 = vn_7004_p;
-    vn7004_count = cnt;
     return 0;
 }
 
-void vn7004_poll(){
+void vn7004_poll(vn7004_t *vn_p){
 #if defined (FREERTOS)
     uint32_t tick = xTaskGetTickCount();
 #else
     uint32_t tick = HAL_GetTickCount();
 #endif
+    const uint32_t stage = vn_p->counter % STAGE_COUNT;
 
-    static uint32_t poll_cnt = 0;
-    poll_cnt++;
 
-    for(uint32_t i=0; i<vn7004_count; i++){
-        vn7004_t *vn = &vn_7004[i];
-        int curr_valid = 1;
+    for(uint32_t i=0; i<vn_p->ic_count; i++){
+        vn7004_ic_t *ic = &vn_p->ic[i];
 
-        int complementare_pair = i;
-        if (vn->cs_common != -1) {
-            complementare_pair = vn_7004[vn->cs_common].cs_common > vn->cs_common ? vn_7004[vn->cs_common].cs_common : vn->cs_common;            
-            if (poll_cnt & 0x02) {
-                complementare_pair = vn_7004[vn->cs_common].cs_common < vn->cs_common ? vn_7004[vn->cs_common].cs_common : vn->cs_common;
-            }
+        if (ic->enable == 0){
+            ic->state = vn7004_state_off;
+        }
 
-            if ((i == complementare_pair) || ((poll_cnt & 0x01) == 0)) {
-                curr_valid = 0;
+        const uint32_t curr_valid = ((stage > 1) && (i == (vn_p->counter / STAGE_COUNT))) ? 1:0;
+
+        if (stage == 0) {
+            if ((ic->state != vn7004_state_off) && (i == (vn_p->counter / STAGE_COUNT))){
+                gpio_set(ic->csen_pin, 1);  
             }
         }
 
-        if (vn->enable == 0){
-            vn->state = vn7004_state_off;
+        if (stage == (STAGE_COUNT - 1)){
+            gpio_set(ic->csen_pin, 0);  
         }
-        
-        switch (vn->state){
+
+        switch (ic->state){
         case vn7004_state_off:
-            gpio_set(vn->en_pin, 0);
-            gpio_set(vn->csen_pin, 0);            
-            if (vn->enable){
-                if ((i == complementare_pair) && (poll_cnt & 0x01) == 0) {
-                    gpio_set(vn->csen_pin, 1);                    
-                    vn->counter = tick;
-                    vn->state = vn7004_state_check;
+            gpio_set(ic->en_pin, 0);
+            gpio_set(ic->csen_pin, 0);            
+            if (ic->enable){
+                if (stage == 0){               
+                    ic->counter = tick;
+                    ic->state = vn7004_state_check;
                 }
 
                 break;
             }
 
-            vn->status = vn7004_state_off;            
+            ic->status = vn7004_state_off;            
             break;
 
         case vn7004_state_check:
-            if ((tick - vn->counter) >= 10){
+            if (curr_valid){
                 // TODO check short to vcc
-                vn->counter = tick;
-                gpio_set(vn->en_pin, 1);
-                vn->state = vn7004_state_on;
+                ic->counter = tick;
+                gpio_set(ic->en_pin, 1);
+                ic->state = vn7004_state_on;
             }
             break;
 
         case vn7004_state_on:
             if (curr_valid) {
-                vn->current_ma = vn->current;                
-                if (vn->current_ma < vn->max_current) {
-                    vn->counter = tick;
+                ic->current_ma = ic->current;                
+                if (ic->current_ma < ic->max_current) {
+                    ic->counter = tick;
                 }
-                if (vn->current_ma > vn7004_short_current) {
-                    vn->counter = tick;
-                    gpio_set(vn->en_pin, 0);    
-                    vn->state = vn7004_state_short_gnd;
+                if (ic->current_ma > vn7004_short_current) {
+                    ic->counter = tick;
+                    gpio_set(ic->en_pin, 0);    
+                    ic->state = vn7004_state_short_gnd;
                 }
-                if ((vn->counter - tick) > vn->max_current_time) {
-                    vn->counter = tick;
-                    gpio_set(vn->en_pin, 0);    
-                    vn->state = vn7004_state_ocp;
+                if ((ic->counter - tick) > ic->max_current_time) {
+                    ic->counter = tick;
+                    gpio_set(ic->en_pin, 0);    
+                    ic->state = vn7004_state_ocp;
                 }
                 break;
             }
-
+            break;
 
         case vn7004_state_short_gnd:
         case vn7004_state_ocp:       
-            if (vn->ovc_lock_time == 0){
+            if (ic->ovc_lock_time == 0){
                 break;
             }
-            if ((vn->counter - tick) > vn->ovc_lock_time){
-                vn->counter = tick;
-                gpio_set(vn->en_pin, 1);
-                vn->state = vn7004_state_on;
+            if ((ic->counter - tick) > ic->ovc_lock_time){
+                ic->counter = tick;
+                gpio_set(ic->en_pin, 1);
+                ic->state = vn7004_state_on;
             }
         break;
 
@@ -124,4 +116,9 @@ void vn7004_poll(){
 
         }
     }
+
+    if (++vn_p->counter >= (vn_p->ic_count * STAGE_COUNT)){
+        vn_p->counter = 0;
+    }
+
 }

@@ -1,4 +1,7 @@
 #include "app.h"
+#include "adc.h"
+#include "gpio.h"
+#include "vn7004.h"
 
 osThreadId CtlPDMHandle;
 static uint32_t CtlPDMBuffer[ 256 ];
@@ -8,10 +11,16 @@ static void StartCtlPDM(void const * argument);
 extern adc_t adc1;
 extern adc_t adc2;
 
+extern vn7004_t vn1;
+extern vn7004_t vn2;
+extern vn7004_t vn3;
+
 static pump_t pump = {
     .enable_delay = 1000,
     .disable_delay = 3000
 };
+
+static int pump_algo(int water_level);
 
 int acc = 0;
 
@@ -26,6 +35,7 @@ int get_acc(){
 }
 
 void StartCtlPDM(void const * argument) {
+    (void)argument;
     uint32_t volt_bat = 0;
     int  over_voltage = 0, override_water = 0;
     ///HAL_ADCEx_Calibration_Start(&hadc1);
@@ -37,8 +47,9 @@ void StartCtlPDM(void const * argument) {
         if (ulTaskNotifyTake( pdTRUE, 100) == 0){
             continue;
         }
-        
-        vn7004_poll();
+        vn7004_poll(&vn1);
+        vn7004_poll(&vn2);        
+        vn7004_poll(&vn3);
 
         uint16_t temper, val;
         if (adc_get_ch(&adc2, 0, &val) == 0){
@@ -67,8 +78,11 @@ void StartCtlPDM(void const * argument) {
 
         
         int pump_status = pump_algo(water_level);
-
-
+        if (override_water) {
+            pump_status = 1;
+        }
+        (void) over_voltage;
+        (void) pump_status; 
     }
 }
 

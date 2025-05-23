@@ -29,8 +29,8 @@ const can_filt_t can_filters[] = {
 
 
 const can_cfg_t can_cfg = {
-    .baudrate = &baud_250,
-    .filter = &can_filters,
+    .baudrate = baud_250,
+    .filter = can_filters,
     .baud_num = sizeof(baud_250) / sizeof (baud_250[0]),
     .filt_num = sizeof(can_filters) / sizeof (can_filters[0]),
     .silent = 0
@@ -39,7 +39,6 @@ const can_cfg_t can_cfg = {
 can_t can1 = {
     .can = CAN1,
     .cfg = &can_cfg,
-    .no_it = 0,
     .rx_cmpl = can_rx_cb,
     .tx_cmpl = can_tx_cb
 };
@@ -198,30 +197,27 @@ tmr_cc_t tim1 = {
 
 uint16_t current_key[4];
 
-vn7004_t key[4] = {
-    {
-        .en_pin = &gpio_a[0],
-        .csen_pin = &gpio_a[1],
-        .current = &current_key[0],
-        .cs_common = -1,
-        .max_current = 15000,
-        .max_current_time = 300,
-        .ovc_lock_time = 0
-    },
-    {
-        .en_pin = &gpio_a[2],
-        .csen_pin = &gpio_a[3],
-        .current = &current_key[1],
-        .cs_common = -1,
-        .max_current = 15000,
-        .max_current_time = 300,
-        .ovc_lock_time = 0
-    },
+vn7004_ic_t ic_group1 = {
+    .en_pin = &gpio_a[0],
+    .csen_pin = &gpio_a[1],
+    .current = &current_key[0],
+    .max_current = 15000,
+    .max_current_time = 300,
+    .ovc_lock_time = 0 
+};
+vn7004_ic_t ic_group2 = {
+    .en_pin = &gpio_a[2],
+    .csen_pin = &gpio_a[3],
+    .current = &current_key[1],
+    .max_current = 15000,
+    .max_current_time = 300,
+    .ovc_lock_time = 0
+};
+vn7004_ic_t ic_group3[] = {
     {
         .en_pin = &gpio_b[2],
         .csen_pin = &gpio_b[1],
         .current = &current_key[2],
-        .cs_common = 3,
         .max_current = 20000,
         .max_current_time = 300,
         .ovc_lock_time = 0
@@ -230,14 +226,24 @@ vn7004_t key[4] = {
         .en_pin = &gpio_b[0],
         .csen_pin = &gpio_a[4],
         .current = &current_key[3],
-        .cs_common = 2,
         .max_current = 20000,
         .max_current_time = 300,
         .ovc_lock_time = 0
-    },        
+    }  
 };
 
-
+vn7004_t vn1 = {
+    .ic = &ic_group1,
+    .ic_count = 1
+};
+vn7004_t vn2 = {
+    .ic = &ic_group2,
+    .ic_count = 1
+};
+vn7004_t vn3 = {
+    .ic = ic_group3,
+    .ic_count = 2
+};
 
 
 int bsp_init(){
@@ -262,15 +268,16 @@ int bsp_init(){
     /* USER CODE BEGIN 2 */
    // can_init(&can1);
    // can_start();
-   vn7004_init(key, sizeof(key) / sizeof(key[0]));
+   //vn7004_init(key, sizeof(key) / sizeof(key[0]));
    // HAL_NVIC_SetPriority(CEC_CAN_IRQn, 4, 0);
   //  HAL_NVIC_EnableIRQ(CEC_CAN_IRQn);
     return rv;
 }
 volatile int rx,tx;
 void can_rx_cb (can_fifo_t *fifo){
+    (void) fifo;
     rx++;
-};
+}
 
 uint8_t read_pin(){
     uint8_t pin_status = 0;
@@ -285,7 +292,7 @@ void led(int stat){
 
 
 void ctl_can_bus(int stat){
-
+    (void) stat;
 } 
 
 void start_adc(){
