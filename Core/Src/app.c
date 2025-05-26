@@ -76,13 +76,17 @@ void StartCtlPDM(void const * argument) {
 
         led(acc);
 
-        
         int pump_status = pump_algo(water_level);
         if (override_water) {
             pump_status = 1;
         }
         (void) over_voltage;
         (void) pump_status; 
+
+        vn7004_ctl(&vn1.ic[0], acc);
+        vn7004_ctl(&vn2.ic[0], pump_status);
+        vn7004_ctl(&vn3.ic[0], 1);
+        vn7004_ctl(&vn3.ic[1], 1);
     }
 }
 

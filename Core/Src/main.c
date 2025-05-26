@@ -708,23 +708,6 @@ void StartInputTask(void const * argument)
     //#define WATER_DET_Pin GPIO_PIN_12
     //#define WATER_DET_GPIO_Port GPIOB
 
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-
-
-
-    HAL_GPIO_WritePin(OUT6_H_GPIO_Port, OUT6_H_Pin, GPIO_PIN_SET);
-
-    HAL_GPIO_WritePin(OUT56_SEL_GPIO_Port, OUT56_SEL_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(OUT56_SEN_GPIO_Port, OUT56_SEN_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(OUT5_EN_GPIO_Port, OUT5_EN_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(OUT4_SEN_GPIO_Port, OUT4_SEN_Pin, GPIO_PIN_SET);
-
-    HAL_GPIO_WritePin(OUT4_H_GPIO_Port, OUT4_H_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(OUT3_SEN_GPIO_Port, OUT3_SEN_Pin, GPIO_PIN_SET);
-
-    HAL_GPIO_WritePin(OUT3_H_GPIO_Port, OUT3_H_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(OUT3_L_GPIO_Port, OUT3_L_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(OUT4_L_GPIO_Port, OUT4_L_Pin, GPIO_PIN_SET);
     osDelay(1000);
   }
   /* USER CODE END StartInputTask */

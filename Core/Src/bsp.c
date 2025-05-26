@@ -198,37 +198,41 @@ tmr_cc_t tim1 = {
 uint16_t current_key[4];
 
 vn7004_ic_t ic_group1 = {
-    .en_pin = &gpio_a[0],
-    .csen_pin = &gpio_a[1],
-    .current = &current_key[0],
+    .en_pin = &gpio_a[1],
+    .csen_pin = &gpio_a[0],
+    .current = &ADC1->JDR1,
     .max_current = 15000,
     .max_current_time = 300,
-    .ovc_lock_time = 0 
+    .ovc_lock_time = 0,
+    .current_scale = (3300*1000/4096*2*16720/1780)
 };
 vn7004_ic_t ic_group2 = {
     .en_pin = &gpio_a[2],
     .csen_pin = &gpio_a[3],
-    .current = &current_key[1],
+    .current = &ADC1->JDR2,
     .max_current = 15000,
     .max_current_time = 300,
-    .ovc_lock_time = 0
+    .ovc_lock_time = 0,
+    .current_scale = (3300*1000/4096*2*16720/1780)
 };
 vn7004_ic_t ic_group3[] = {
     {
         .en_pin = &gpio_b[2],
         .csen_pin = &gpio_b[1],
-        .current = &current_key[2],
-        .max_current = 20000,
-        .max_current_time = 300,
-        .ovc_lock_time = 0
+        .current = &ADC1->JDR3,
+        .max_current = 250,
+        .max_current_time = 20000,
+        .ovc_lock_time = 0,
+        .current_scale = (3300*1000/4096*2*16720/1780)
     },
     {
         .en_pin = &gpio_b[0],
         .csen_pin = &gpio_a[4],
-        .current = &current_key[3],
+        .current = &ADC1->JDR3,
         .max_current = 20000,
         .max_current_time = 300,
-        .ovc_lock_time = 0
+        .ovc_lock_time = 0,
+        .current_scale = (3300*1000/4096*2*16720/1780)
     }  
 };
 

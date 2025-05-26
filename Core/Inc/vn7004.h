@@ -5,21 +5,23 @@
 #define STAGE_COUNT 3
 
 typedef enum {
-    vn7004_status_off,
-    vn7004_status_on,
-    vn7004_status_ocp,
-    vn7004_status_short_gnd,
-    vn7004_status_short_vcc
+    vn7004_state_off,
+    vn7004_state_on,
+    vn7004_state_check,
+    vn7004_state_ocp,
+    vn7004_state_short_gnd,
+    vn7004_state_short_vcc
 }vn7004_stat_t;
 
 typedef struct {
     const gpio_t *en_pin;
     const gpio_t *csen_pin;
-    uint16_t *const current;
+    volatile uint32_t *const current;
 
     const uint32_t max_current;
     const uint32_t max_current_time;
     const uint32_t ovc_lock_time;
+    const uint32_t current_scale; /// =3300000*2*K/(R * 4096)
 
     int enable;
     vn7004_stat_t status;
