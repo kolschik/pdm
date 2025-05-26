@@ -35,14 +35,11 @@ void vn7004_poll(vn7004_t *vn_p){
         }
 
         uint32_t curr_valid = 0;
-        if (i == (vn_p->counter / STAGE_COUNT)){
-
-        }
-        uint32_t curr_valid = ((stage >= 1) && (i == (vn_p->counter / STAGE_COUNT))) ? 1:0;
-
-        if (stage == 0) {
-            if ((ic->state != vn7004_state_off) && (i == (vn_p->counter / STAGE_COUNT))){
+        if ((i == (vn_p->counter / STAGE_COUNT)) && (ic->state != vn7004_state_off)){
+            if (stage == 0){
                 gpio_set(ic->csen_pin, 1);  
+            } else {
+                curr_valid = 1;
             }
         }
 
