@@ -14,6 +14,7 @@ extern adc_t adc2;
 extern vn7004_t vn1;
 extern vn7004_t vn2;
 extern vn7004_t vn3;
+extern vn7004_t vn4;
 
 static pump_t pump = {
     .enable_delay = 1000,
@@ -33,7 +34,8 @@ int app_init(){
 int get_acc(){
     return acc;
 }
-
+uint16_t curr_array[256];
+uint8_t curr_i; 
 void StartCtlPDM(void const * argument) {
     (void)argument;
     uint32_t volt_bat = 0;
@@ -45,11 +47,14 @@ void StartCtlPDM(void const * argument) {
     //__HAL_TIM_ENABLE(&htim1);
     for(;;) {
         if (ulTaskNotifyTake( pdTRUE, 100) == 0){
+            // todo register error
+
             continue;
         }
         vn7004_poll(&vn1);
         vn7004_poll(&vn2);        
         vn7004_poll(&vn3);
+        vn7004_poll(&vn4);
 
         uint16_t temper, val;
         if (adc_get_ch(&adc2, 0, &val) == 0){
@@ -67,8 +72,6 @@ void StartCtlPDM(void const * argument) {
             }
         }
 
-
-
         if (adc_get_ch(&adc1, 0, &temper) == 0){
 
         }
@@ -85,8 +88,12 @@ void StartCtlPDM(void const * argument) {
 
         vn7004_ctl(&vn1.ic[0], acc);
         vn7004_ctl(&vn2.ic[0], pump_status);
-        vn7004_ctl(&vn3.ic[0], 1);
-        vn7004_ctl(&vn3.ic[1], 1);
+        vn7004_ctl(&vn3.ic[0], 0);
+        vn7004_ctl(&vn3.ic[1], 0);
+        vn7004_ctl(&vn4.ic[0], 1);
+        vn7004_ctl(&vn4.ic[1], 1);
+
+        curr_array[curr_i++] = vn7004_get_cur(&vn4.ic[1]);
     }
 }
 
@@ -102,15 +109,11 @@ void adc2_cb(){}
 
 int pump_algo(int water_level){
 
+    int water_buf = pump.enable * get_acc();
 
-    if ((pump.disable == 1) || (get_acc() == 0)) {
-        pump.water_state = 0;
-        return 0;
-    }
-
-    if (pump.override){
-        pump.water_state = 1;        
-        return 1;
+    if (pump._auto == 0){
+        pump.water_state = water_buf;
+        return water_buf;
     }
 
     uint32_t time_now = xTaskGetTickCount();

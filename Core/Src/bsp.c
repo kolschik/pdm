@@ -89,6 +89,33 @@ const gpio_t gpio_a[] = {
         }
     },
     {
+        .port = OUT56_SEN_GPIO_Port,
+        .pin = OUT56_SEN_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },
+
+    {
+        .port = OUT5_EN_GPIO_Port,
+        .pin = OUT5_EN_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },
+
+
+
+
+    {
         .port = GPIOA,
         .pin = LL_GPIO_PIN_10,
         .cfg = {
@@ -147,8 +174,30 @@ const gpio_t gpio_b[] = {
             .freq = LL_GPIO_SPEED_FREQ_HIGH, 
             .pull = LL_GPIO_PULL_UP,
         }
-    }
+    },
+    {
+        .port = GPIOB,
+        .pin = OUT6_H_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .init_val = 0
+        }
+    },
+    {
+        .port = OUT56_SEL_GPIO_Port,
+        .pin = OUT56_SEL_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .init_val = 0
+        }
+    },
 };
+
+
 
 const gpio_t gpio_c[] = {
     {
@@ -194,61 +243,116 @@ tmr_cc_t tim1 = {
     .timer = TIM1
 };
 
+void cs1(int en){
+    gpio_set(&gpio_a[0], en);
+}
+void cs2(int en){
+    gpio_set(&gpio_a[3], en);
+}
+void cs3(int en){
+    gpio_set(&gpio_b[1], en);
+}
+void cs4(int en){
+    gpio_set(&gpio_a[6], en);
+}
+
+int cs5_stat = 0;
+int cs6_stat = 0;
+void cs5(int en){
+    cs5_stat = en;
+    gpio_set(&gpio_a[4], cs5_stat | cs6_stat);
+    if (en == 1){
+        gpio_set(&gpio_b[5], en);
+    }
+}
+void cs6(int en){
+    cs6_stat = en;
+    gpio_set(&gpio_a[4], cs5_stat | cs6_stat);
+    if (en == 1){
+        gpio_set(&gpio_b[5], en ^ 0x01);
+    }
+}
 
 uint16_t current_key[4];
 
 vn7004_ic_t ic_group1 = {
     .en_pin = &gpio_a[1],
-    .csen_pin = &gpio_a[0],
+    .csen = cs1,
     .current = &ADC1->JDR1,
     .max_current = 15000,
     .max_current_time = 300,
     .ovc_lock_time = 0,
-    .current_scale = (3300*1000/4096*2*16720/1780)
+
 };
 vn7004_ic_t ic_group2 = {
     .en_pin = &gpio_a[2],
-    .csen_pin = &gpio_a[3],
+    .csen = cs2,
     .current = &ADC1->JDR2,
     .max_current = 15000,
     .max_current_time = 300,
     .ovc_lock_time = 0,
-    .current_scale = (3300*1000/4096*2*16720/1780)
+
 };
 vn7004_ic_t ic_group3[] = {
     {
         .en_pin = &gpio_b[2],
-        .csen_pin = &gpio_b[1],
+        .csen = cs3,
         .current = &ADC1->JDR3,
         .max_current = 250,
         .max_current_time = 20000,
         .ovc_lock_time = 0,
-        .current_scale = (3300*1000/4096*2*16720/1780)
+
     },
     {
         .en_pin = &gpio_b[0],
-        .csen_pin = &gpio_a[4],
+        .csen = cs4,
         .current = &ADC1->JDR3,
         .max_current = 20000,
         .max_current_time = 300,
         .ovc_lock_time = 0,
-        .current_scale = (3300*1000/4096*2*16720/1780)
+
+    }  
+};
+vn7004_ic_t ic_group4[] = {
+    {
+        .en_pin = &gpio_a[5],
+        .csen = cs5,
+        .current = &ADC1->JDR4,
+        .max_current = 20000,
+        .max_current_time = 20000,
+        .ovc_lock_time = 0,
+
+    },
+    {
+        .en_pin = &gpio_b[4],
+        .csen = cs6,
+        .current = &ADC1->JDR4,
+        .max_current = 20000,
+        .max_current_time = 300,
+        .ovc_lock_time = 0,
     }  
 };
 
 vn7004_t vn1 = {
     .ic = &ic_group1,
-    .ic_count = 1
+    .ic_count = 1,
+    .current_scale = (3300*1000/4096*2*16720/1780)
 };
 vn7004_t vn2 = {
     .ic = &ic_group2,
-    .ic_count = 1
+    .ic_count = 1,
+    .current_scale = (3300*1000/4096*2*16720/1780)
 };
 vn7004_t vn3 = {
     .ic = ic_group3,
-    .ic_count = 2
+    .ic_count = 2,
+    .current_scale = (3300*1000/4096*2*16720/1780)
 };
-
+vn7004_t vn4 = {
+    .ic = ic_group4,
+    .ic_count = 2,
+    .current_scale = (3300*1000/4096*2*500/1000)
+};
 
 int bsp_init(){
     int rv = 0;

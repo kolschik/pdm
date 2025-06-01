@@ -15,13 +15,12 @@ typedef enum {
 
 typedef struct {
     const gpio_t *en_pin;
-    const gpio_t *csen_pin;
+    void (*csen)(int);
     volatile uint32_t *const current;
 
     const uint32_t max_current;
     const uint32_t max_current_time;
     const uint32_t ovc_lock_time;
-    const uint32_t current_scale; /// =3300000*2*K/(R * 4096)
 
     int enable;
     vn7004_stat_t status;
@@ -33,6 +32,7 @@ typedef struct {
 typedef struct {
     vn7004_ic_t *const ic;
     const uint32_t ic_count;
+    const uint32_t current_scale; /// =3300000*2*K/(R * 4096)
     uint32_t counter;
 }vn7004_t;
 

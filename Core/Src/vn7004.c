@@ -6,8 +6,7 @@
 
 static const uint32_t vn7004_short_current = 3000;
 
-uint16_t curr_array[256];
-uint8_t curr_i; 
+
 
 
 
@@ -32,26 +31,27 @@ void vn7004_poll(vn7004_t *vn_p){
 
         if (ic->enable == 0){
             ic->state = vn7004_state_off;
+            ic->current_ma = 0;
         }
 
         uint32_t curr_valid = 0;
         if ((i == (vn_p->counter / STAGE_COUNT)) && (ic->state != vn7004_state_off)){
             if (stage == 0){
-                gpio_set(ic->csen_pin, 1);  
+                ic->csen(1); 
             } else {
                 curr_valid = 1;
             }
         }
 
         if ((vn_p->ic_count == 1) && (ic->state != vn7004_state_off)){
-            gpio_set(ic->csen_pin, 1);
+            ic->csen(1);
             curr_valid = 1;
         }
 
         switch (ic->state){
         case vn7004_state_off:
             gpio_set(ic->en_pin, 0);
-            gpio_set(ic->csen_pin, 0);            
+            ic->csen(0);          
             if (ic->enable){
                 if (stage == 0){               
                     ic->counter = tick;
@@ -75,8 +75,7 @@ void vn7004_poll(vn7004_t *vn_p){
 
         case vn7004_state_on:
             if (curr_valid) {
-                ic->current_ma = *ic->current * ic->current_scale / 1000;          
-                curr_array[curr_i++] = ic->current_ma;
+                ic->current_ma = *ic->current * vn_p->current_scale / 1000;          
 
                 if (ic->current_ma < ic->max_current) {
                     ic->counter = tick;
@@ -114,7 +113,7 @@ void vn7004_poll(vn7004_t *vn_p){
         }
 
         if (stage == (STAGE_COUNT - 1)){
-            gpio_set(ic->csen_pin, 0);  
+            ic->csen(0);  
         }
 
     }
@@ -129,4 +128,8 @@ void vn7004_poll(vn7004_t *vn_p){
 
 void vn7004_ctl(vn7004_ic_t *vn_ic, uint32_t en){
     vn_ic->enable = en;
+}
+
+int vn7004_get_cur (vn7004_ic_t *vn_ic){
+    return vn_ic->current_ma;
 }

@@ -622,10 +622,10 @@ static void MX_GPIO_Init(void)
 
   /**/
   LL_GPIO_ResetOutputPin(GPIOA, OUT1_SEN_Pin|OUT1_H_Pin|OUT2_H_Pin|OUT2_SEN_Pin
-                          |OUT56_SEN_Pin|OUT5_EN_Pin|OUT4_SEN_Pin);
+                          |OUT56_SEN_Pin|OUT4_SEN_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOB, OUT6_H_Pin|OUT56_SEL_Pin|OUT4_H_Pin|OUT3_SEN_Pin
+  LL_GPIO_ResetOutputPin(GPIOB, OUT56_SEL_Pin|OUT4_H_Pin|OUT3_SEN_Pin
                           |OUT3_H_Pin|OUT3_L_Pin|OUT4_L_Pin);
 
   /**/
@@ -637,7 +637,7 @@ static void MX_GPIO_Init(void)
 
   /**/
   GPIO_InitStruct.Pin = OUT1_SEN_Pin|OUT1_H_Pin|OUT2_H_Pin|OUT2_SEN_Pin
-                          |OUT56_SEN_Pin|OUT5_EN_Pin|OUT4_SEN_Pin;
+                          |OUT56_SEN_Pin|OUT4_SEN_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
@@ -649,7 +649,7 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(WATER_DET_GPIO_Port, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = OUT6_H_Pin|OUT56_SEL_Pin|OUT4_H_Pin|OUT3_SEN_Pin
+  GPIO_InitStruct.Pin = OUT56_SEL_Pin|OUT4_H_Pin|OUT3_SEN_Pin
                           |OUT3_H_Pin|OUT3_L_Pin|OUT4_L_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
