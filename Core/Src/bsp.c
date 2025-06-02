@@ -372,6 +372,8 @@ int bsp_init(){
     rv |= tim_init(&tim1);
     tim_set_freq(&tim1, 500);
     tim_enable(&tim1);
+
+    init_nmea();
     //MX_CRC_Init();
     /* USER CODE BEGIN 2 */
    // can_init(&can1);

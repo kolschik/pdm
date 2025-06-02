@@ -46,17 +46,25 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
+file(GLOB_RECURSE NMEA_SRC 
+        NMEA2000/src/*.cpp
+    )
+
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/app.c
     Core/Src/bsp.c
-    Core/Src/nmea.c
+    Core/Src/nmea.cpp
     Core/Src/vn7004.c    
+
+    ${NMEA_SRC}
+
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${STM_LIB_INC_DIR}
+    NMEA2000/src
 )
 
 # Add project symbols (macros)
