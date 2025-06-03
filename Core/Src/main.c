@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "bsp.h"
+#include "app.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -62,13 +63,10 @@ osStaticMessageQDef_t RxQueueControlBlock;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
-static void MX_ADC1_Init(void);
-static void MX_ADC2_Init(void);
+
 static void MX_CAN_Init(void);
-static void MX_IWDG_Init(void);
-static void MX_TIM1_Init(void);
-static void MX_TIM2_Init(void);
-static void MX_TIM3_Init(void);
+//static void MX_IWDG_Init(void);
+
 void StartCANTask(void const * argument);
 
 void StartInputTask(void const * argument);
@@ -119,9 +117,7 @@ int main(void)
   //MX_ADC2_Init();
   MX_CAN_Init();
   //MX_IWDG_Init();
-  //MX_TIM1_Init();
-  //MX_TIM2_Init();
-  //MX_TIM3_Init();
+
   /* USER CODE BEGIN 2 */
   HAL_NVIC_SetPriority(ADC1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(ADC1_IRQn);
@@ -233,184 +229,6 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief ADC1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_ADC1_Init(void)
-{
-
-  /* USER CODE BEGIN ADC1_Init 0 */
-
-  /* USER CODE END ADC1_Init 0 */
-
-  LL_ADC_InitTypeDef ADC_InitStruct = {0};
-  LL_ADC_CommonInitTypeDef ADC_CommonInitStruct = {0};
-  LL_ADC_REG_InitTypeDef ADC_REG_InitStruct = {0};
-  LL_ADC_INJ_InitTypeDef ADC_INJ_InitStruct = {0};
-
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC1);
-
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
-  /**ADC1 GPIO Configuration
-  PA0-WKUP   ------> ADC1_IN0
-  PA5   ------> ADC1_IN5
-  PA6   ------> ADC1_IN6
-  PB0   ------> ADC1_IN8
-  */
-  GPIO_InitStruct.Pin = OUT1_CS_Pin|OUT2_CS_Pin|OUT34_CS_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  GPIO_InitStruct.Pin = BAT_METER_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  LL_GPIO_Init(BAT_METER_GPIO_Port, &GPIO_InitStruct);
-
-  /* ADC1 DMA Init */
-
-  /* ADC1 Init */
-  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_1, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
-
-  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PRIORITY_LOW);
-
-  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MODE_NORMAL);
-
-  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PERIPH_NOINCREMENT);
-
-  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MEMORY_INCREMENT);
-
-  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PDATAALIGN_HALFWORD);
-
-  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MDATAALIGN_HALFWORD);
-
-  /* USER CODE BEGIN ADC1_Init 1 */
-
-  /* USER CODE END ADC1_Init 1 */
-
-  /** Common config
-  */
-  ADC_InitStruct.DataAlignment = LL_ADC_DATA_ALIGN_RIGHT;
-  ADC_InitStruct.SequencersScanMode = LL_ADC_SEQ_SCAN_ENABLE;
-  LL_ADC_Init(ADC1, &ADC_InitStruct);
-  ADC_CommonInitStruct.Multimode = LL_ADC_MULTI_INDEPENDENT;
-  LL_ADC_CommonInit(__LL_ADC_COMMON_INSTANCE(ADC1), &ADC_CommonInitStruct);
-  ADC_REG_InitStruct.TriggerSource = LL_ADC_REG_TRIG_SOFTWARE;
-  ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS;
-  ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
-  ADC_REG_InitStruct.ContinuousMode = LL_ADC_REG_CONV_SINGLE;
-  ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_UNLIMITED;
-  LL_ADC_REG_Init(ADC1, &ADC_REG_InitStruct);
-  ADC_INJ_InitStruct.TriggerSource = LL_ADC_INJ_TRIG_EXT_TIM1_TRGO;
-  ADC_INJ_InitStruct.SequencerLength = LL_ADC_INJ_SEQ_SCAN_ENABLE_4RANKS;
-  ADC_INJ_InitStruct.SequencerDiscont = LL_ADC_INJ_SEQ_DISCONT_DISABLE;
-  ADC_INJ_InitStruct.TrigAuto = LL_ADC_INJ_TRIG_INDEPENDENT;
-  LL_ADC_INJ_Init(ADC1, &ADC_INJ_InitStruct);
-
-  /** Configure Regular Channel
-  */
-  LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_TEMPSENSOR);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_TEMPSENSOR, LL_ADC_SAMPLINGTIME_71CYCLES_5);
-  LL_ADC_SetCommonPathInternalCh(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_PATH_INTERNAL_TEMPSENSOR);
-
-  /** Configure Injected Channel
-  */
-  LL_ADC_INJ_SetSequencerRanks(ADC1, LL_ADC_INJ_RANK_1, LL_ADC_CHANNEL_0);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_0, LL_ADC_SAMPLINGTIME_28CYCLES_5);
-  LL_ADC_INJ_SetOffset(ADC1, LL_ADC_INJ_RANK_1, 0);
-
-  /** Configure Injected Channel
-  */
-  LL_ADC_INJ_SetSequencerRanks(ADC1, LL_ADC_INJ_RANK_2, LL_ADC_CHANNEL_5);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_5, LL_ADC_SAMPLINGTIME_28CYCLES_5);
-  LL_ADC_INJ_SetOffset(ADC1, LL_ADC_INJ_RANK_2, 0);
-
-  /** Configure Injected Channel
-  */
-  LL_ADC_INJ_SetSequencerRanks(ADC1, LL_ADC_INJ_RANK_3, LL_ADC_CHANNEL_6);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_6, LL_ADC_SAMPLINGTIME_28CYCLES_5);
-  LL_ADC_INJ_SetOffset(ADC1, LL_ADC_INJ_RANK_3, 0);
-
-  /** Configure Injected Channel
-  */
-  LL_ADC_INJ_SetSequencerRanks(ADC1, LL_ADC_INJ_RANK_4, LL_ADC_CHANNEL_8);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_8, LL_ADC_SAMPLINGTIME_28CYCLES_5);
-  LL_ADC_INJ_SetOffset(ADC1, LL_ADC_INJ_RANK_4, 0);
-
-  /** Configure Regular Channel
-  */
-  LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2, LL_ADC_CHANNEL_VREFINT);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_VREFINT, LL_ADC_SAMPLINGTIME_71CYCLES_5);
-  LL_ADC_SetCommonPathInternalCh(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_PATH_INTERNAL_VREFINT);
-  /* USER CODE BEGIN ADC1_Init 2 */
-
-  /* USER CODE END ADC1_Init 2 */
-
-}
-
-/**
-  * @brief ADC2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_ADC2_Init(void)
-{
-
-  /* USER CODE BEGIN ADC2_Init 0 */
-
-  /* USER CODE END ADC2_Init 0 */
-
-  LL_ADC_InitTypeDef ADC_InitStruct = {0};
-  LL_ADC_REG_InitTypeDef ADC_REG_InitStruct = {0};
-  LL_ADC_INJ_InitTypeDef ADC_INJ_InitStruct = {0};
-
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC2);
-
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
-  /**ADC2 GPIO Configuration
-  PA7   ------> ADC2_IN7
-  */
-  GPIO_InitStruct.Pin = OUT56_CS_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  LL_GPIO_Init(OUT56_CS_GPIO_Port, &GPIO_InitStruct);
-
-  /* USER CODE BEGIN ADC2_Init 1 */
-
-  /* USER CODE END ADC2_Init 1 */
-
-  /** Common config
-  */
-  ADC_InitStruct.DataAlignment = LL_ADC_DATA_ALIGN_RIGHT;
-  ADC_InitStruct.SequencersScanMode = LL_ADC_SEQ_SCAN_DISABLE;
-  LL_ADC_Init(ADC2, &ADC_InitStruct);
-  ADC_REG_InitStruct.TriggerSource = LL_ADC_REG_TRIG_SOFTWARE;
-  ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_DISABLE;
-  ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
-  ADC_REG_InitStruct.ContinuousMode = LL_ADC_REG_CONV_SINGLE;
-  ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_NONE;
-  LL_ADC_REG_Init(ADC2, &ADC_REG_InitStruct);
-  ADC_INJ_InitStruct.SequencerLength = 0;
-  ADC_INJ_InitStruct.SequencerDiscont = LL_ADC_INJ_SEQ_DISCONT_DISABLE;
-  ADC_INJ_InitStruct.TrigAuto = LL_ADC_INJ_TRIG_INDEPENDENT;
-  LL_ADC_INJ_Init(ADC2, &ADC_INJ_InitStruct);
-
-  /** Configure Regular Channel
-  */
-  LL_ADC_REG_SetSequencerRanks(ADC2, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_7);
-  LL_ADC_SetChannelSamplingTime(ADC2, LL_ADC_CHANNEL_7, LL_ADC_SAMPLINGTIME_1CYCLE_5);
-  /* USER CODE BEGIN ADC2_Init 2 */
-
-  /* USER CODE END ADC2_Init 2 */
-
-}
-
-/**
   * @brief CAN Initialization Function
   * @param None
   * @retval None
@@ -447,21 +265,10 @@ static void MX_CAN_Init(void)
 
 }
 
-/**
-  * @brief IWDG Initialization Function
-  * @param None
-  * @retval None
-  */
+/*
 static void MX_IWDG_Init(void)
 {
 
-  /* USER CODE BEGIN IWDG_Init 0 */
-
-  /* USER CODE END IWDG_Init 0 */
-
-  /* USER CODE BEGIN IWDG_Init 1 */
-
-  /* USER CODE END IWDG_Init 1 */
   LL_IWDG_Enable(IWDG);
   LL_IWDG_EnableWriteAccess(IWDG);
   LL_IWDG_SetPrescaler(IWDG, LL_IWDG_PRESCALER_4);
@@ -471,118 +278,10 @@ static void MX_IWDG_Init(void)
   }
 
   LL_IWDG_ReloadCounter(IWDG);
-  /* USER CODE BEGIN IWDG_Init 2 */
 
-  /* USER CODE END IWDG_Init 2 */
 
 }
-
-/**
-  * @brief TIM1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM1_Init(void)
-{
-
-  /* USER CODE BEGIN TIM1_Init 0 */
-
-  /* USER CODE END TIM1_Init 0 */
-
-  LL_TIM_InitTypeDef TIM_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
-
-  /* USER CODE BEGIN TIM1_Init 1 */
-
-  /* USER CODE END TIM1_Init 1 */
-  TIM_InitStruct.Prescaler = 0;
-  TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 65535;
-  TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
-  TIM_InitStruct.RepetitionCounter = 0;
-  LL_TIM_Init(TIM1, &TIM_InitStruct);
-  LL_TIM_DisableARRPreload(TIM1);
-  LL_TIM_SetClockSource(TIM1, LL_TIM_CLOCKSOURCE_INTERNAL);
-  LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_RESET);
-  LL_TIM_DisableMasterSlaveMode(TIM1);
-  /* USER CODE BEGIN TIM1_Init 2 */
-
-  /* USER CODE END TIM1_Init 2 */
-
-}
-
-/**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM2_Init(void)
-{
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
-  LL_TIM_InitTypeDef TIM_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
-
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  TIM_InitStruct.Prescaler = 0;
-  TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 65535;
-  TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
-  LL_TIM_Init(TIM2, &TIM_InitStruct);
-  LL_TIM_DisableARRPreload(TIM2);
-  LL_TIM_SetClockSource(TIM2, LL_TIM_CLOCKSOURCE_INTERNAL);
-  LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
-  LL_TIM_DisableMasterSlaveMode(TIM2);
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
-
-}
-
-/**
-  * @brief TIM3 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM3_Init(void)
-{
-
-  /* USER CODE BEGIN TIM3_Init 0 */
-
-  /* USER CODE END TIM3_Init 0 */
-
-  LL_TIM_InitTypeDef TIM_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
-
-  /* USER CODE BEGIN TIM3_Init 1 */
-
-  /* USER CODE END TIM3_Init 1 */
-  TIM_InitStruct.Prescaler = 0;
-  TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 65535;
-  TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
-  LL_TIM_Init(TIM3, &TIM_InitStruct);
-  LL_TIM_DisableARRPreload(TIM3);
-  LL_TIM_SetClockSource(TIM3, LL_TIM_CLOCKSOURCE_INTERNAL);
-  LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_RESET);
-  LL_TIM_DisableMasterSlaveMode(TIM3);
-  /* USER CODE BEGIN TIM3_Init 2 */
-
-  /* USER CODE END TIM3_Init 2 */
-
-}
-
+*/
 /**
   * Enable DMA controller clock
   */
@@ -674,6 +373,7 @@ uint32_t volt;
 /* USER CODE END Header_StartCANTask */
 void StartCANTask(void const * argument)
 {
+    (void)argument;
   HAL_CAN_Start(&hcan);
   CAN_TxHeaderTypeDef can_header;
   can_header.ExtId = 1000;
@@ -701,15 +401,17 @@ void StartCANTask(void const * argument)
 /* USER CODE END Header_StartInputTask */
 void StartInputTask(void const * argument)
 {
-  /* USER CODE BEGIN StartInputTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    //#define WATER_DET_Pin GPIO_PIN_12
-    //#define WATER_DET_GPIO_Port GPIOB
 
-    osDelay(1000);
-  }
+  /* USER CODE BEGIN StartInputTask */
+    (void)argument;
+    /* Infinite loop */
+    for(;;)
+    {
+      //#define WATER_DET_Pin GPIO_PIN_12
+      //#define WATER_DET_GPIO_Port GPIOB
+
+      osDelay(1000);
+    }
   /* USER CODE END StartInputTask */
 }
 

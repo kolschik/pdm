@@ -10,7 +10,7 @@ static const uint32_t vn7004_short_current = 3000;
 
 
 
-int vn7004_init(vn7004_t *vn_7004_p, uint32_t cnt) {
+int vn7004_init(vn7004_t *vn_7004_p) {
     if (vn_7004_p == 0) {
         return EINVAL;
     }

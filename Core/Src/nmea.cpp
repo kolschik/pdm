@@ -15,10 +15,17 @@ bool nmea_node::CANOpen(){
 }
 
 bool nmea_node::CANGetFrame(unsigned long &id, unsigned char &len, unsigned char *buf){
+    (void)id;
+    (void)len;
+    (void)buf;
     return false;
 }
 
 bool nmea_node::CANSendFrame(unsigned long id, unsigned char len, const unsigned char *buf, bool wait_sent){
+    (void)id;
+    (void)len;
+    (void)buf;
+    (void)wait_sent;
     return false;
 }
 

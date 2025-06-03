@@ -37,3 +37,5 @@ typedef struct {
 }vn7004_t;
 
 void vn7004_poll(vn7004_t *vn_p);
+void vn7004_ctl(vn7004_ic_t *vn_ic, uint32_t en);
+int vn7004_get_cur (vn7004_ic_t *vn_ic);

@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "bsp.h"
+#include "adc.h"
 #include "stm32f1xx_it.h"
 #include "FreeRTOS.h"
 #include "task.h"

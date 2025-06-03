@@ -572,6 +572,9 @@ static ErrorStatus UTILS_PLL_HSE_ConfigSystemClock(uint32_t PLL_InputFrequency, 
                                                    LL_UTILS_PLLInitTypeDef *UTILS_PLLInitStruct,
                                                    LL_UTILS_ClkInitTypeDef *UTILS_ClkInitStruct)
 {
+  (void)PLL_InputFrequency;
+  (void)UTILS_PLLInitStruct;
+  (void)UTILS_ClkInitStruct;
   ErrorStatus status = SUCCESS;
 
   /* Check if one of the PLL is enabled */

@@ -4,6 +4,7 @@
 #include "main.h"
 #include "vn7004.h"
 
+int init_nmea();
 void can_rx_cb (can_fifo_t *fifo);
 void can_tx_cb(uint8_t *tx_stot);
 
