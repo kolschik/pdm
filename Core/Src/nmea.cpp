@@ -37,7 +37,7 @@ nmea_node nmea;
 
 int nmea_node::init(){
 
-    SetN2kCANSendFrameBufSize(250);
+    SetN2kCANSendFrameBufSize(64);
     // Set Product information
     SetProductInformation("00000001", // Manufacturer's Model serial code
                                     100, // Manufacturer's product code
