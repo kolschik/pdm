@@ -3,10 +3,8 @@
 #include "can.h"
 #include "main.h"
 #include "vn7004.h"
+#include "nmea.h"
 
-int init_nmea();
-void can_rx_cb (can_fifo_t *fifo);
-void can_tx_cb(uint8_t *tx_stot);
 
 const can_baud_t baud_250[] = {
     {
@@ -374,20 +372,17 @@ int bsp_init(){
     tim_set_freq(&tim1, 500);
     tim_enable(&tim1);
 
-    init_nmea();
+    can_init(&can1);
+    can_start();
+
+    nmea_init(0xff & ('p'+ 'd' + 'm'));
     //MX_CRC_Init();
     /* USER CODE BEGIN 2 */
-   // can_init(&can1);
-   // can_start();
+
    //vn7004_init(key, sizeof(key) / sizeof(key[0]));
    // HAL_NVIC_SetPriority(CEC_CAN_IRQn, 4, 0);
   //  HAL_NVIC_EnableIRQ(CEC_CAN_IRQn);
     return rv;
-}
-volatile int rx,tx;
-void can_rx_cb (can_fifo_t *fifo){
-    (void) fifo;
-    rx++;
 }
 
 uint8_t read_pin(){

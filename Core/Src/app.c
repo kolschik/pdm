@@ -2,8 +2,11 @@
 #include "adc.h"
 #include "gpio.h"
 #include "vn7004.h"
+#include "nmea.h"
 
 osThreadId CtlPDMHandle;
+extern osThreadId CANTaskHandle;
+
 static uint32_t CtlPDMBuffer[ 256 ];
 static osStaticThreadDef_t CtlPDMControlBlock;
 static void StartCtlPDM(void const * argument);
@@ -130,4 +133,66 @@ int pump_algo(int water_level){
     }
 
     return pump.water_state;
+}
+
+
+void nmea_sender(){
+    tN2kMsg_t msg;
+    can_fifo_t tx_fifo;
+    static uint8_t sid1278508 = 0;  
+    static uint32_t send_stat = 0;
+    /*
+  HAL_CAN_Start(&hcan);
+  CAN_TxHeaderTypeDef can_header;
+  can_header.ExtId = 1000;
+  can_header.IDE = 0;
+  can_header.DLC = 8;
+  uint8_t data[8];
+  for(;;)
+  {
+    data[7] = volt;
+    data[0]++;
+    uint32_t mailbox=0;
+    HAL_CAN_AddTxMessage(&hcan, &can_header, data, &mailbox);
+    osDelay(10);
+  }
+*/
+    uint32_t volt=0, cur=0, battemp=0;
+  
+    for (uint32_t i=0; i<3; i++){
+        switch (i){
+        case 0:
+            SetN2kPGN127508(&msg, 0, volt, cur, battemp, sid1278508++);
+            break;
+        case 1:
+            SetN2kPGN127505(&msg, 0, N2kft_Water, 0, 1);
+            break;
+        case 2:
+            break;        
+        default:
+            break;
+        }
+    }
+
+
+
+    if (packN2k(&msg, &tx_fifo)){
+        return;
+    }
+
+    if (can_tx(tx_fifo, 50)) {
+        send_stat++;
+    }
+
+    return;
+}
+
+
+void can_rx_cb (can_fifo_t *fifo){
+    (void)fifo;
+}
+void can_tx_cb(uint8_t *tx_slot){
+    (void)tx_slot;
+    BaseType_t not = 0;
+    vTaskNotifyGiveFromISR(CANTaskHandle, &not);
 }

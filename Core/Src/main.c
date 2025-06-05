@@ -374,20 +374,10 @@ uint32_t volt;
 void StartCANTask(void const * argument)
 {
     (void)argument;
-  HAL_CAN_Start(&hcan);
-  CAN_TxHeaderTypeDef can_header;
-  can_header.ExtId = 1000;
-  can_header.IDE = 0;
-  can_header.DLC = 8;
-  uint8_t data[8];
-  for(;;)
-  {
-    data[7] = volt;
-    data[0]++;
-    uint32_t mailbox=0;
-    HAL_CAN_AddTxMessage(&hcan, &can_header, data, &mailbox);
-    osDelay(10);
-  }
+    while(1){
+        nmea_sender(); 
+    }
+
   /* USER CODE END 5 */
 }
 
