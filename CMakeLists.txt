@@ -78,3 +78,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     STM_LIB
     # Add user defined libraries
 )
+
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMENT "Generate bin..."
+    COMMAND ${CMAKE_OBJCOPY} -O binary ${CMAKE_PROJECT_NAME}.elf ${CMAKE_PROJECT_NAME}.bin)
+    

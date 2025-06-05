@@ -2,8 +2,7 @@
 #include "stdint.h"
 #include "can.h"
 
-uint8_t N2kMaxCanBusAddress = 251;
-uint32_t N2kPGNIsoAddressClaim = 60928L;
+
 
 typedef enum {
     N2kOnOff_Off=0,         ///< No, Off, Disabled

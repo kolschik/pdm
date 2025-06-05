@@ -279,7 +279,7 @@ vn7004_ic_t ic_group1 = {
     .csen = cs1,
     .current = &ADC1->JDR1,
     .max_current = 15000,
-    .max_current_time = 300,
+    .max_current_time = 1500,
     .ovc_lock_time = 0,
 
 };
@@ -288,7 +288,7 @@ vn7004_ic_t ic_group2 = {
     .csen = cs2,
     .current = &ADC1->JDR2,
     .max_current = 15000,
-    .max_current_time = 300,
+    .max_current_time = 1500,
     .ovc_lock_time = 0,
 
 };
@@ -297,8 +297,8 @@ vn7004_ic_t ic_group3[] = {
         .en_pin = &gpio_b[2],
         .csen = cs3,
         .current = &ADC1->JDR3,
-        .max_current = 250,
-        .max_current_time = 20000,
+        .max_current = 20000,
+        .max_current_time = 1500,
         .ovc_lock_time = 0,
 
     },
@@ -307,7 +307,7 @@ vn7004_ic_t ic_group3[] = {
         .csen = cs4,
         .current = &ADC1->JDR3,
         .max_current = 20000,
-        .max_current_time = 300,
+        .max_current_time = 1500,
         .ovc_lock_time = 0,
 
     }  
@@ -317,8 +317,8 @@ vn7004_ic_t ic_group4[] = {
         .en_pin = &gpio_a[5],
         .csen = cs5,
         .current = &ADC1->JDR4,
-        .max_current = 20000,
-        .max_current_time = 20000,
+        .max_current = 2500,
+        .max_current_time = 1000,
         .ovc_lock_time = 0,
 
     },
@@ -326,8 +326,8 @@ vn7004_ic_t ic_group4[] = {
         .en_pin = &gpio_b[4],
         .csen = cs6,
         .current = &ADC1->JDR4,
-        .max_current = 20000,
-        .max_current_time = 300,
+        .max_current = 2500,
+        .max_current_time = 1000,
         .ovc_lock_time = 0,
     }  
 };

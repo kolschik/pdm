@@ -1,20 +1,20 @@
-#include "nmea.h"
+#include <string.h>
+#include <nmea.h>
+
+uint8_t _N2kMaxCanBusAddress = 251;
+uint32_t _N2kPGNIsoAddressClaim = 60928L;
 
 struct {
     uint8_t source_id;
 }nmea2k_t;
 
-
 int nmea_init(uint8_t source){
-    if (source >= N2kMaxCanBusAddress){
+    if (source >= _N2kMaxCanBusAddress){
         return EINVAL;
     }
     nmea2k_t.source_id = source;
     return 0;
 }
-
-#include <string.h>
-#include <nmea.h>
 
 
 void SetN2kPGN127508(tN2kMsg_t *N2kMsg, uint8_t BatInst, uint16_t BatVolt, uint16_t BatCur, uint16_t BatTemp, uint8_t SID) {
@@ -76,7 +76,7 @@ int packN2k(tN2kMsg_t *N2kMsg, can_fifo_t *fifo){
     }
     N2kMsg->Source = nmea2k_t.source_id;
     // CAN bus address range is 0-251. Anyway allow ISO address claim mgs.
-    if (N2kMsg->Source > N2kMaxCanBusAddress && N2kMsg->PGN != N2kPGNIsoAddressClaim) {
+    if (N2kMsg->Source > _N2kMaxCanBusAddress && N2kMsg->PGN != _N2kPGNIsoAddressClaim) {
         return EFAULT;
     }
 
