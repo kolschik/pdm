@@ -69,6 +69,20 @@ void SetN2kPGN127505(tN2kMsg_t *N2kMsg, uint8_t Instance, tN2kFluidType FluidTyp
     N2kMsg->Data[7] = 0xff;
 }
 
+void SetN2kPGN127751(tN2kMsg_t *N2kMsg, uint8_t Instance, uint16_t Voltage, uint32_t Current, uint8_t SID) {
+    N2kMsg->PGN = 127751L;
+    N2kMsg->Data[0] = SID;
+    N2kMsg->Data[1] = Instance;
+
+    N2kMsg->Data[2] = Voltage;
+    N2kMsg->Data[3] = Voltage >> 8;
+
+    N2kMsg->Data[4] = Current;
+    N2kMsg->Data[5] = Current >> 8;
+    N2kMsg->Data[6] = Current >> 16;
+
+    N2kMsg->Data[7] = 0xff;
+}
 
 int packN2k(tN2kMsg_t *N2kMsg, can_fifo_t *fifo){
     if (N2kMsg->PGN & 0xff){

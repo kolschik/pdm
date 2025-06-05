@@ -21,6 +21,7 @@
 #include "main.h"
 #include "bsp.h"
 #include "adc.h"
+#include "can.h"
 #include "stm32f1xx_it.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -209,4 +210,13 @@ void ADC1_IRQHandler(void)
 
   /* USER CODE END DMA1_Channel1_IRQn 1 */
 }
+void CAN1_TX_IRQHandler(){
+    can_handler();
+}
+void CAN1_RX0_IRQHandler (){
+    can_handler();
+}
+
+
+
 /* USER CODE END 1 */

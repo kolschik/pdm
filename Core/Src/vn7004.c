@@ -85,7 +85,7 @@ void vn7004_poll(vn7004_t *vn_p){
                     gpio_set(ic->en_pin, 0);    
                     ic->state = vn7004_state_short_gnd;
                 }
-                if ((ic->counter - tick) > ic->max_current_time) {
+                if ((tick - ic->counter) > ic->max_current_time) {
                     ic->counter = tick;
                     gpio_set(ic->en_pin, 0);    
                     ic->state = vn7004_state_ocp;

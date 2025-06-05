@@ -125,8 +125,26 @@ const gpio_t gpio_a[] = {
             .init_val = 0
         }
     },
-};
 
+    {
+        .port = GPIOA,
+        .pin = LL_GPIO_PIN_11,
+        .cfg = {
+            .mode = LL_GPIO_MODE_FLOATING,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+        }
+    },
+
+    {
+        .port = GPIOA,
+        .pin = LL_GPIO_PIN_12,
+        .cfg = {
+            .mode = LL_GPIO_MODE_ALTERNATE,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+        }
+    },
+};
 
 
 const gpio_t gpio_b[] = {
@@ -380,11 +398,16 @@ int bsp_init(){
     /* USER CODE BEGIN 2 */
 
    //vn7004_init(key, sizeof(key) / sizeof(key[0]));
-   // HAL_NVIC_SetPriority(CEC_CAN_IRQn, 4, 0);
-  //  HAL_NVIC_EnableIRQ(CEC_CAN_IRQn);
+    HAL_NVIC_SetPriority(CAN1_TX_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(CAN1_TX_IRQn);
+    HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
+    HAL_NVIC_SetPriority(ADC1_IRQn, 4, 0);
+    HAL_NVIC_EnableIRQ(ADC1_IRQn);
     return rv;
 }
-
+#define             USB_HP_CAN1_TX_IRQHandler
+#define CAN1_RX0_IRQHandler           USB_LP_CAN1_RX0_IRQHandler
 uint8_t read_pin(){
     uint8_t pin_status = 0;
     pin_status |= gpio_read(&gpio_b[3]) << 0;

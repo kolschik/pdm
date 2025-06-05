@@ -5,7 +5,7 @@
 		{
 			"name": "openocd",
 			"type": "cortex-debug",
-			"request": "attach",
+			"request": "launch",
 			"cwd": "${workspaceRoot}",
 			"runToEntryPoint": "main",
 			"servertype": "openocd",

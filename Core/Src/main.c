@@ -106,9 +106,7 @@ int main(void)
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
-    if (bsp_init()){
-        while(1);
-    }
+
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
@@ -117,10 +115,11 @@ int main(void)
   //MX_ADC2_Init();
   MX_CAN_Init();
   //MX_IWDG_Init();
-
+    if (bsp_init()){
+        while(1);
+    }
   /* USER CODE BEGIN 2 */
-  HAL_NVIC_SetPriority(ADC1_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(ADC1_IRQn);
+
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -235,7 +234,7 @@ void SystemClock_Config(void)
   */
 static void MX_CAN_Init(void)
 {
-
+  return;
   /* USER CODE BEGIN CAN_Init 0 */
 
   /* USER CODE END CAN_Init 0 */
@@ -374,7 +373,7 @@ uint32_t volt;
 void StartCANTask(void const * argument)
 {
     (void)argument;
-    while(1){
+    while(100){
         nmea_sender(); 
     }
 

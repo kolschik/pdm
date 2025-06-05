@@ -37,8 +37,10 @@ int app_init(){
 int get_acc(){
     return acc;
 }
-uint16_t curr_array[256];
+uint16_t curr_acc;
+uint16_t curr_pump;
 uint8_t curr_i; 
+uint16_t batt_volt = 0;
 void StartCtlPDM(void const * argument) {
     (void)argument;
     uint32_t volt_bat = 0;
@@ -73,6 +75,7 @@ void StartCtlPDM(void const * argument) {
                 acc = 0;
                 over_voltage = 1;
             }
+            batt_volt = volt_bat;
         }
 
         if (adc_get_ch(&adc1, 0, &temper) == 0){
@@ -96,7 +99,7 @@ void StartCtlPDM(void const * argument) {
         vn7004_ctl(&vn4.ic[0], 1);
         vn7004_ctl(&vn4.ic[1], 1);
 
-        curr_array[curr_i++] = vn7004_get_cur(&vn4.ic[1]);
+        curr_acc = vn7004_get_cur(&vn1.ic[0]);
     }
 }
 
@@ -139,7 +142,8 @@ int pump_algo(int water_level){
 void nmea_sender(){
     tN2kMsg_t msg;
     can_fifo_t tx_fifo;
-    static uint8_t sid1278508 = 0;  
+    static uint8_t sid127508 = 0;
+    static uint8_t sid127751 = 0;  
     static uint32_t send_stat = 0;
     /*
   HAL_CAN_Start(&hcan);
@@ -157,32 +161,35 @@ void nmea_sender(){
     osDelay(10);
   }
 */
-    uint32_t volt=0, cur=0, battemp=0;
+    uint32_t  cur=0, battemp=0;
   
-    for (uint32_t i=0; i<3; i++){
+    for (uint32_t i=2; i<3; i++){
         switch (i){
         case 0:
-            SetN2kPGN127508(&msg, 0, volt, cur, battemp, sid1278508++);
+            SetN2kPGN127508(&msg, 0, batt_volt, cur, battemp, sid127508++);
             break;
         case 1:
             SetN2kPGN127505(&msg, 0, N2kft_Water, 0, 1);
             break;
         case 2:
+            SetN2kPGN127751(&msg, 0, batt_volt, curr_acc, sid127751++);
             break;        
         default:
             break;
+        }
+
+        if (packN2k(&msg, &tx_fifo)){
+            return;
+        }
+
+        if (can_tx(tx_fifo, 50)) {
+            send_stat++;
         }
     }
 
 
 
-    if (packN2k(&msg, &tx_fifo)){
-        return;
-    }
 
-    if (can_tx(tx_fifo, 50)) {
-        send_stat++;
-    }
 
     return;
 }
