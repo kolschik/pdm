@@ -4,7 +4,8 @@
 #include "cmsis_os.h"
 #endif
 
-static const uint32_t vn7004_short_current = 3000;
+static const uint32_t vn7004_short_current = 4096*5000/(3300*2);
+
 
 
 
@@ -80,7 +81,7 @@ void vn7004_poll(vn7004_t *vn_p){
                 if (ic->current_ma < ic->max_current) {
                     ic->counter = tick;
                 }
-                if (ic->current_ma > vn7004_short_current) {
+                if (*ic->current > vn7004_short_current) {
                     ic->counter = tick;
                     gpio_set(ic->en_pin, 0);    
                     ic->state = vn7004_state_short_gnd;
@@ -112,7 +113,7 @@ void vn7004_poll(vn7004_t *vn_p){
 
         }
 
-        if (stage == (STAGE_COUNT - 1)){
+        if ((stage == (STAGE_COUNT - 1)) && (vn_p->ic_count != 1) ){
             ic->csen(0);  
         }
 

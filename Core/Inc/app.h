@@ -4,6 +4,21 @@
 #include "can.h"
 #include "cmsis_os.h"
 
+typedef struct {
+    uint32_t status;
+    uint16_t current;
+} pdm_ch_t;
+
+typedef struct {
+    pdm_ch_t acc_ch;
+    pdm_ch_t pump_ch;
+    pdm_ch_t light_ch;
+    pdm_ch_t can_ch;
+
+    uint16_t batt_volt;
+    uint32_t acc;
+}pdm_t;
+
 typedef struct
 {
     uint32_t time;
@@ -17,7 +32,6 @@ typedef struct
 } pump_t;
 
 
-void nmea_sender();
 int app_init();
 void adc1_cb();
 void adc2_cb();

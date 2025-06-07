@@ -43,11 +43,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-CAN_HandleTypeDef hcan;
 
-osThreadId CANTaskHandle;
-uint32_t CANTaskBuffer[ 256 ];
-osStaticThreadDef_t CANTaskControlBlock;
+
 
 osThreadId InputTaskHandle;
 uint32_t InputTaskBuffer[ 128 ];
@@ -56,7 +53,7 @@ osMessageQId RxQueueHandle;
 uint8_t RxQueueBuffer[ 8 * sizeof( uint32_t ) ];
 osStaticMessageQDef_t RxQueueControlBlock;
 /* USER CODE BEGIN PV */
-
+uint32_t flash_start_p;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,10 +61,9 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 
-static void MX_CAN_Init(void);
 //static void MX_IWDG_Init(void);
 
-void StartCANTask(void const * argument);
+
 
 void StartInputTask(void const * argument);
 
@@ -79,14 +75,15 @@ extern uint32_t SystemCoreClock;
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
-
+volatile uint32_t vtor_address ;
 /**
   * @brief  The application entry point.
   * @retval int
   */
 int main(void)
 {
-
+ vtor_address = (uint32_t)flash_start_p;
+  SCB->VTOR = (volatile uint32_t)0x08000000;
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -113,7 +110,6 @@ int main(void)
   MX_DMA_Init();
   //MX_ADC1_Init();
   //MX_ADC2_Init();
-  MX_CAN_Init();
   //MX_IWDG_Init();
     if (bsp_init()){
         while(1);
@@ -145,8 +141,7 @@ int main(void)
     app_init();
   /* Create the thread(s) */
   /* definition and creation of CANTask */
-  osThreadStaticDef(CANTask, StartCANTask, osPriorityNormal, 0, 256, CANTaskBuffer, &CANTaskControlBlock);
-  CANTaskHandle = osThreadCreate(osThread(CANTask), NULL);
+
 
 
 
@@ -225,43 +220,6 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   LL_RCC_SetADCClockSource(LL_RCC_ADC_CLKSRC_PCLK2_DIV_4);
-}
-
-/**
-  * @brief CAN Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_CAN_Init(void)
-{
-  return;
-  /* USER CODE BEGIN CAN_Init 0 */
-
-  /* USER CODE END CAN_Init 0 */
-
-  /* USER CODE BEGIN CAN_Init 1 */
-
-  /* USER CODE END CAN_Init 1 */
-  hcan.Instance = CAN1;
-  hcan.Init.Prescaler = 6;
-  hcan.Init.Mode = CAN_MODE_NORMAL;
-  hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan.Init.TimeSeg1 = CAN_BS1_13TQ;
-  hcan.Init.TimeSeg2 = CAN_BS2_2TQ;
-  hcan.Init.TimeTriggeredMode = DISABLE;
-  hcan.Init.AutoBusOff = ENABLE;
-  hcan.Init.AutoWakeUp = DISABLE;
-  hcan.Init.AutoRetransmission = DISABLE;
-  hcan.Init.ReceiveFifoLocked = DISABLE;
-  hcan.Init.TransmitFifoPriority = DISABLE;
-  if (HAL_CAN_Init(&hcan) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN CAN_Init 2 */
-
-  /* USER CODE END CAN_Init 2 */
-
 }
 
 /*
@@ -363,22 +321,6 @@ static void MX_GPIO_Init(void)
 uint32_t volt;
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartCANTask */
-/**
-  * @brief  Function implementing the CANTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartCANTask */
-void StartCANTask(void const * argument)
-{
-    (void)argument;
-    while(100){
-        nmea_sender(); 
-    }
-
-  /* USER CODE END 5 */
-}
 
 
 /* USER CODE BEGIN Header_StartInputTask */

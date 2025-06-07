@@ -353,7 +353,7 @@ vn7004_ic_t ic_group4[] = {
 vn7004_t vn1 = {
     .ic = &ic_group1,
     .ic_count = 1,
-    .current_scale = (3300*1000/4096*2*16720/1780)
+    .current_scale = (3300*1000/4096*2*16920/1780)
 };
 vn7004_t vn2 = {
     .ic = &ic_group2,
