@@ -49,9 +49,8 @@
 osThreadId InputTaskHandle;
 uint32_t InputTaskBuffer[ 128 ];
 osStaticThreadDef_t InputTaskControlBlock;
-osMessageQId RxQueueHandle;
-uint8_t RxQueueBuffer[ 8 * sizeof( uint32_t ) ];
-osStaticMessageQDef_t RxQueueControlBlock;
+
+
 /* USER CODE BEGIN PV */
 uint32_t flash_start_p;
 /* USER CODE END PV */
@@ -132,8 +131,7 @@ int main(void)
 
   /* Create the queue(s) */
   /* definition and creation of RxQueue */
-  osMessageQStaticDef(RxQueue, 8, uint32_t, RxQueueBuffer, &RxQueueControlBlock);
-  RxQueueHandle = osMessageCreate(osMessageQ(RxQueue), NULL);
+
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */

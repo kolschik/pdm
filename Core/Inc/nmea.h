@@ -39,3 +39,15 @@ int packN2k(tN2kMsg_t *N2kMsg, can_fifo_t *fifo);
 void SetN2kPGN127508(tN2kMsg_t *N2kMsg, uint8_t BatInst, uint16_t BatVolt, uint16_t BatCur, uint16_t BatTemp, uint8_t SID);
 void SetN2kPGN127505(tN2kMsg_t *N2kMsg, uint8_t Instance, tN2kFluidType FluidType, uint16_t Level, uint32_t Capacity);
 void SetN2kPGN127751(tN2kMsg_t *N2kMsg, uint8_t Instance, uint16_t Voltage, uint32_t Current, uint8_t SID);
+
+int ParseN2kPGN127502(tN2kMsg_t *N2kMsg, tN2kOnOff *sw, uint8_t *bank);
+/************************************************************************//**
+ * \brief Convert a CAN Id to NMEA2000 values
+ *
+ * \param id    given CAN Id
+ * \param prio  Priority of the N2k message
+ * \param pgn   PGN of the N2k message
+ * \param src   Source of the N2k message
+ * \param dst   Destination of the N2k message
+ */
+void CanIdToN2k(uint32_t id, tN2kMsg_t *msg);

@@ -10,6 +10,11 @@ typedef struct {
 } pdm_ch_t;
 
 typedef struct {
+    int status;
+    uint32_t update;
+} pdm_in_sw_t;
+
+typedef struct {
     pdm_ch_t acc_ch;
     pdm_ch_t pump_ch;
     pdm_ch_t light_ch;
@@ -17,6 +22,7 @@ typedef struct {
 
     uint16_t batt_volt;
     uint32_t acc;
+    pdm_in_sw_t sw[8];
 }pdm_t;
 
 typedef struct

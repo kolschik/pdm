@@ -3,6 +3,7 @@
 #include "gpio.h"
 #include "vn7004.h"
 #include "nmea.h"
+#include "string.h"
 
 osThreadId CtlPDMHandle;
 osThreadId CANTaskHandle;
@@ -12,6 +13,10 @@ static osStaticThreadDef_t CANTaskControlBlock;
 
 static uint32_t CtlPDMBuffer[ 256 ];
 static osStaticThreadDef_t CtlPDMControlBlock;
+
+osMessageQId RxQueueHandle;
+uint8_t RxQueueBuffer[ 8 * sizeof( can_fifo_t ) ];
+osStaticMessageQDef_t RxQueueControlBlock;
 
 static void StartCtlPDM(void const * argument);
 static void nmea_sender(void const * argument);
@@ -44,6 +49,9 @@ int app_init(){
 
     osThreadStaticDef(CANTask, nmea_sender, osPriorityNormal, 0, 256, CANTaskBuffer, &CANTaskControlBlock);
     CANTaskHandle = osThreadCreate(osThread(CANTask), &pdm);
+
+    osMessageQStaticDef(RxQueue, 8, can_fifo_t, RxQueueBuffer, &RxQueueControlBlock);
+    RxQueueHandle = osMessageCreate(osMessageQ(RxQueue), NULL);
     return 0;
 }
 
@@ -113,7 +121,7 @@ void StartCtlPDM(void const * argument) {
         (void) over_voltage;
 
         vn7004_ctl(&vn1.ic[0], pump_status);
-        vn7004_ctl(&vn2.ic[0], acc);
+        vn7004_ctl(&vn2.ic[0], pdm->sw[0].status);
         vn7004_ctl(&vn3.ic[0], 0);
         vn7004_ctl(&vn3.ic[1], 0);
         vn7004_ctl(&vn4.ic[0], acc);
@@ -174,6 +182,22 @@ static void nmea_sender(void const * argument){
     uint8_t sid127751 = 0;  
     pdm_t * pdm = (pdm_t *)argument;
     while(1){
+        can_fifo_t rx_fifo;
+        if (xQueueReceive(RxQueueHandle, &rx_fifo, 5) == pdTRUE) {
+            tN2kMsg_t rx_msg;
+
+            CanIdToN2k(rx_fifo.id, &rx_msg);
+            if ((rx_msg.PGN == 127502L) && (rx_msg.Source == ('K' ^ 'E' ^ 'Y' ^ 'P' ^ 'A' ^ 'D'))){
+                memcpy (rx_msg.Data, rx_fifo.data8, 8); 
+                tN2kOnOff sw[28];
+                uint8_t bank;
+                ParseN2kPGN127502(&rx_msg, sw, &bank);
+                if (sw[0] < N2kOnOff_Error){
+                    pdm->sw[0].status = sw[0];
+                }
+            }
+        }
+        
         tN2kMsg_t msg;
         can_fifo_t tx_fifo;
 
@@ -210,8 +234,9 @@ static void nmea_sender(void const * argument){
 
 
 void can_rx_cb (can_fifo_t *fifo){
-    (void)fifo;
+    xQueueSendFromISR(RxQueueHandle, fifo, 0);
 }
+
 void can_tx_cb(uint8_t *tx_slot){
     (void)tx_slot;
     BaseType_t not = 0;
