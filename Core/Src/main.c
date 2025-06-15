@@ -211,7 +211,7 @@ void SystemClock_Config(void)
 
   }
   LL_SetSystemCoreClock(48000000);
-
+  //LL_Init1msTick(48000000);
    /* Update the time base */
   if (HAL_InitTick (TICK_INT_PRIORITY) != HAL_OK)
   {

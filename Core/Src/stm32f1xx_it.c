@@ -21,10 +21,12 @@
 #include "main.h"
 #include "bsp.h"
 #include "adc.h"
+#include "app.h"
 #include "can.h"
 #include "stm32f1xx_it.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "rtc.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -200,10 +202,11 @@ void DMA1_Channel1_IRQHandler(void)
 
 /* USER CODE BEGIN 1 */
 extern adc_t adc1;
+extern adc_t adc2;
 void ADC1_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
-  adc_handler(&adc1);
+    adc_handler(&adc1);
   /* USER CODE END DMA1_Channel1_IRQn 0 */
 
   /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
@@ -217,6 +220,8 @@ void CAN1_RX0_IRQHandler (){
     can_handler();
 }
 
-
+void RTC_Alarm_IRQHandler(void) {
+    rtc_handler();
+}
 
 /* USER CODE END 1 */

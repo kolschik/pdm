@@ -4,7 +4,7 @@
 #include "main.h"
 #include "vn7004.h"
 #include "nmea.h"
-
+#include "stm32f1xx_ll_rtc.h"
 
 const can_baud_t baud_250[] = {
     {
@@ -393,11 +393,26 @@ int bsp_init(){
     can_init(&can1);
     can_start();
 
+    LL_PWR_EnableBkUpAccess();
+   // if (LL_RCC_IsEnabledRTC() == 0){
+        LL_RCC_SetRTCClockSource(LL_RCC_RTC_CLKSOURCE_LSI);
+        LL_RCC_EnableRTC();
+        LL_RTC_InitTypeDef rtc_struct = {0};
+        rtc_struct.AsynchPrescaler = (40000 / 10) - 1;
+        rv |= LL_RTC_Init(RTC, &rtc_struct);
+        LL_RTC_EnableIT_ALR(RTC);
+   // }
+    LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_17);
+    LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_17);
+
     nmea_init(0xff & ('p'+ 'd' + 'm'));
     //MX_CRC_Init();
     /* USER CODE BEGIN 2 */
 
    //vn7004_init(key, sizeof(key) / sizeof(key[0]));
+    HAL_NVIC_SetPriority(RTC_Alarm_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(RTC_Alarm_IRQn);
+
     HAL_NVIC_SetPriority(CAN1_TX_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(CAN1_TX_IRQn);
     HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 5, 0);
@@ -433,3 +448,8 @@ HAL_GPIO_WritePin(OUT2_SEN_GPIO_Port, OUT2_SEN_Pin, GPIO_PIN_SET);
 HAL_GPIO_WritePin(OUT1_H_GPIO_Port, OUT1_H_Pin, GPIO_PIN_SET);
 HAL_GPIO_WritePin(OUT2_H_GPIO_Port, OUT2_H_Pin, GPIO_PIN_SET);
 */
+void rtc_handler(){
+    if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_17)){
+        LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_17);
+    }
+}

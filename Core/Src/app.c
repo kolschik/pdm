@@ -4,6 +4,7 @@
 #include "vn7004.h"
 #include "nmea.h"
 #include "string.h"
+#include "stm32f1xx_ll_rtc.h"
 
 osThreadId CtlPDMHandle;
 osThreadId CANTaskHandle;
@@ -21,6 +22,7 @@ osStaticMessageQDef_t RxQueueControlBlock;
 static void StartCtlPDM(void const * argument);
 static void nmea_sender(void const * argument);
 void SystemClock_Config(void);
+void sleep();
 
 extern adc_t adc1;
 extern adc_t adc2;
@@ -42,7 +44,7 @@ int acc = 0;
 int acc_last = 0;
 
 int app_init(){
-    pdm_t pdm;
+    static pdm_t pdm = {0};
     osThreadStaticDef(CtlPDM, StartCtlPDM, osPriorityHigh, 0, sizeof(CtlPDMBuffer)/4, CtlPDMBuffer, &CtlPDMControlBlock);
     CtlPDMHandle = osThreadCreate(osThread(CtlPDM), &pdm);
 
@@ -124,7 +126,7 @@ void StartCtlPDM(void const * argument) {
         vn7004_ctl(&vn2.ic[0], pdm->sw[0].status);
         vn7004_ctl(&vn3.ic[0], 0);
         vn7004_ctl(&vn3.ic[1], 0);
-        vn7004_ctl(&vn4.ic[0], acc);
+        vn7004_ctl(&vn4.ic[0], 1);
         vn7004_ctl(&vn4.ic[1], light * acc);
 
         pdm->pump_ch.current = vn7004_get_cur(&vn1.ic[0]);
@@ -132,14 +134,11 @@ void StartCtlPDM(void const * argument) {
 
         pdm->can_ch.current = vn7004_get_cur(&vn1.ic[0]);
         pdm->light_ch.current = vn7004_get_cur(&vn1.ic[1]);
-        if (1 == 0){
-              SysTick->CTRL  = 0;      
-            HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
-            SystemClock_Config();
-              SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
-                   SysTick_CTRL_TICKINT_Msk   |
-                   SysTick_CTRL_ENABLE_Msk;      
+
+        if ((xTaskGetTickCount() > 10000) && (acc == 0)) {
+            sleep();
         }
+
     }
 }
 
@@ -148,7 +147,10 @@ void adc1_cb(){
     vTaskNotifyGiveFromISR(CtlPDMHandle, &tpw);
 }
 
-void adc2_cb(){}
+void adc2_cb(){
+
+    //pdm->batt_volt = volt_bat;
+}
 
 
 
@@ -185,15 +187,16 @@ static void nmea_sender(void const * argument){
         can_fifo_t rx_fifo;
         if (xQueueReceive(RxQueueHandle, &rx_fifo, 5) == pdTRUE) {
             tN2kMsg_t rx_msg;
-
+            uint32_t tick = xTaskGetTickCount();
             CanIdToN2k(rx_fifo.id, &rx_msg);
             if ((rx_msg.PGN == 127502L) && (rx_msg.Source == ('K' ^ 'E' ^ 'Y' ^ 'P' ^ 'A' ^ 'D'))){
                 memcpy (rx_msg.Data, rx_fifo.data8, 8); 
                 tN2kOnOff sw[28];
                 uint8_t bank;
                 ParseN2kPGN127502(&rx_msg, sw, &bank);
-                if (sw[0] < N2kOnOff_Error){
-                    pdm->sw[0].status = sw[0];
+                for (uint32_t i=0; i<(sizeof(pdm->sw) / sizeof(pdm->sw[0])); i++){
+                    pdm->sw[i].status = sw[i] < N2kOnOff_Error ? sw[i] : -1;
+                    pdm->sw[i].update = tick;                    
                 }
             }
         }
@@ -247,3 +250,37 @@ void vApplicationIdleHook( void ){
   CLEAR_BIT(SCB->SCR, ((uint32_t)SCB_SCR_SLEEPDEEP_Msk));
     __WFI();
 }
+
+void sleep(){
+    LL_ADC_Disable(adc1.a);
+    LL_ADC_Disable(adc2.a);
+    SysTick->CTRL  = 0;
+
+    uint32_t tickstart = HAL_GetTick();
+    if ((LL_RTC_IsActiveFlag_RTOF(RTC) == 0) && ((HAL_GetTick() - tickstart) > 5)){
+        return;
+    }
+
+    LL_RTC_DisableWriteProtection(RTC);
+    
+    uint32_t time = LL_RTC_TIME_Get(RTC);
+
+    uint16_t alarm_temp_h, alarm_temp_l;
+    
+    alarm_temp_h = RTC->CNTH >> 16;
+    alarm_temp_l = time & 0xffff;
+    RTC->ALRL = alarm_temp_l + 3;
+    RTC->ALRH = alarm_temp_h;
+    if ((alarm_temp_h != RTC->CNTH) | (alarm_temp_l > (0xFFFF - 3))) RTC->ALRH = alarm_temp_h + 1;
+    RTC->CRL &= ~RTC_CRL_CNF;
+    
+    while ((RTC_CRL_RTOFF & RTC->CRL) == 0);  
+
+    HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
+    SystemClock_Config();
+
+
+    LL_ADC_Enable(adc1.a);
+    LL_ADC_Enable(adc2.a);
+}
+
