@@ -23,6 +23,7 @@ typedef struct {
     uint16_t batt_volt;
     uint32_t acc;
     pdm_in_sw_t sw[8];
+    int water_stat;
 }pdm_t;
 
 typedef struct

@@ -53,4 +53,4 @@ int ParseN2kPGN127502(tN2kMsg_t *N2kMsg, tN2kOnOff *sw, uint8_t *bank);
 void CanIdToN2k(uint32_t id, tN2kMsg_t *msg);
 
 
-typedef void (*nmea_send_handler)(tN2kMsg_t *msg, void *argument);
+typedef int (*nmea_send_handler)(tN2kMsg_t *msg, void *argument);

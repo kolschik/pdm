@@ -42,6 +42,11 @@ int acc_last = 0;
 
 int app_init(){
     static pdm_t pdm = {0};
+    for (uint8_t i = 0; i<sizeof(pdm.sw)/sizeof(pdm.sw[0]); i++){
+        pdm.sw[i].status = -1;
+        pdm.sw[i].update = -1;
+    }
+
     osThreadStaticDef(CtlPDM, StartCtlPDM, osPriorityHigh, 0, sizeof(CtlPDMBuffer)/4, CtlPDMBuffer, &CtlPDMControlBlock);
     CtlPDMHandle = osThreadCreate(osThread(CtlPDM), &pdm);
 
@@ -57,7 +62,7 @@ int app_init(){
 
 void StartCtlPDM(void const * argument) {
     pdm_t *pdm = (pdm_t *)argument;
-
+    int permit_sleep = 0;  
     uint32_t volt_bat = 0;
     int  over_voltage = 0;
     int light = 0;
@@ -86,6 +91,7 @@ void StartCtlPDM(void const * argument) {
         if (adc_get_ch(&adc2, 0, &val) == 0){
             volt_bat = adc_convert(val, 3300, 20, 3, 0);
             if (volt_bat > 10000) {
+                permit_sleep = 0;                
                 acc = 1;
             }
             if (volt_bat < 8000) {
@@ -118,13 +124,18 @@ void StartCtlPDM(void const * argument) {
         water_level = read_pin() * acc;
 
         led(acc);
-
+        
+        pump._auto = 1;
+        if ((pdm->sw[0].status == 1) && (pdm->sw[1].status != -1) && 
+            (tick - pdm->sw[0].update < 5000) && (tick - pdm->sw[1].update < 5000)){
+                pump.enable = pdm->sw[1].status * acc;
+                pump._auto = 0;
+        }
         int pump_status = pump_algo(water_level) * acc;
-
         (void) over_voltage;
 
         vn7004_ctl(&vn1.ic[0], pump_status);
-        vn7004_ctl(&vn2.ic[0], pdm->sw[0].status);
+        vn7004_ctl(&vn2.ic[0], acc);
         vn7004_ctl(&vn3.ic[0], 0);
         vn7004_ctl(&vn3.ic[1], 0);
         vn7004_ctl(&vn4.ic[0], 1);
@@ -133,10 +144,13 @@ void StartCtlPDM(void const * argument) {
         pdm->pump_ch.current = vn7004_get_cur(&vn1.ic[0]);
         pdm->acc_ch.current = vn7004_get_cur(&vn1.ic[1]);
 
-        pdm->can_ch.current = vn7004_get_cur(&vn1.ic[0]);
-        pdm->light_ch.current = vn7004_get_cur(&vn1.ic[1]);
+        pdm->can_ch.current = vn7004_get_cur(&vn4.ic[0]);
+        pdm->light_ch.current = vn7004_get_cur(&vn4.ic[1]);
 
-        if ((xTaskGetTickCount() > 10000) && (acc == 0)) {
+        if (((tick - acc_off_time) > 5000) && (acc == 0)){
+            permit_sleep = 1;
+        }
+        if (permit_sleep) {
             sleep();
         }
 
@@ -180,9 +194,8 @@ int pump_algo(int water_level){
 }
 
 
-static void nmea_sender(void const * argument){
-    uint8_t sid127508 = 0;
-    uint8_t sid127751 = 0;  
+static void nmea_sender(void const * argument){ 
+    uint32_t send_stat = 0;    
     pdm_t * pdm = (pdm_t *)argument;
     while(1){
         can_fifo_t rx_fifo;
@@ -202,37 +215,19 @@ static void nmea_sender(void const * argument){
             }
         }
         
-        tN2kMsg_t msg;
-        can_fifo_t tx_fifo;
-
-        uint32_t send_stat = 0;
-
-        uint32_t  cur=0, battemp=0;
-    
-        for (uint32_t i=2; i<3; i++){
-            switch (i){
-            case 0:
-
-                break;
-            case 1:
-
-                break;
-            case 2:
-
-                break;        
-            default:
-                break;
-            }
-
-            if (packN2k(&msg, &tx_fifo)){
-                continue;
-            }
-
-            if (can_tx(tx_fifo, 50)) {
-                send_stat++;
-            }
+        static uint32_t handler_cnt = 0;
+        extern nmea_send_handler send_handler[3];
+        if (handler_cnt >= sizeof(send_handler)/sizeof(send_handler[0])){
+            handler_cnt = 0;
         }
-        vTaskDelay(5);
+        tN2kMsg_t msg;        
+        if (send_handler[handler_cnt++](&msg, pdm)){
+            can_fifo_t tx_fifo;
+            packN2k(&msg, &tx_fifo);
+            if (can_tx(tx_fifo, 10)) {
+                send_stat++;
+            }            
+        }
     }
 }
 

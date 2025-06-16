@@ -279,14 +279,14 @@ void cs5(int en){
     cs5_stat = en;
     gpio_set(&gpio_a[4], cs5_stat | cs6_stat);
     if (en == 1){
-        gpio_set(&gpio_b[5], en);
+        gpio_set(&gpio_b[5], en ^ 0x01);
     }
 }
 void cs6(int en){
     cs6_stat = en;
     gpio_set(&gpio_a[4], cs5_stat | cs6_stat);
     if (en == 1){
-        gpio_set(&gpio_b[5], en ^ 0x01);
+        gpio_set(&gpio_b[5], en);
     }
 }
 
