@@ -27,10 +27,7 @@ void sleep();
 extern adc_t adc1;
 extern adc_t adc2;
 
-extern vn7004_t vn1;
-extern vn7004_t vn2;
-extern vn7004_t vn3;
-extern vn7004_t vn4;
+
 
 static pump_t pump = {
     ._auto = 1,
@@ -76,6 +73,10 @@ void StartCtlPDM(void const * argument) {
 
             continue;
         }
+        extern vn7004_t vn1;
+        extern vn7004_t vn2;
+        extern vn7004_t vn3;
+        extern vn7004_t vn4;        
         vn7004_poll(&vn1);
         vn7004_poll(&vn2);        
         vn7004_poll(&vn3);
@@ -211,13 +212,13 @@ static void nmea_sender(void const * argument){
         for (uint32_t i=2; i<3; i++){
             switch (i){
             case 0:
-                SetN2kPGN127508(&msg, 0, pdm->batt_volt, cur, battemp, sid127508++);
+
                 break;
             case 1:
-                SetN2kPGN127505(&msg, 0, N2kft_Water, 0, 1);
+
                 break;
             case 2:
-                SetN2kPGN127751(&msg, 0, pdm->batt_volt, pdm->acc_ch.current, sid127751++);
+
                 break;        
             default:
                 break;
