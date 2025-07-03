@@ -2,6 +2,7 @@
 #include "adc.h"
 #include "gpio.h"
 #include "vn7004.h"
+#include "vn_double.h"
 #include "nmea.h"
 #include "string.h"
 #include "stm32f1xx_ll_rtc.h"
@@ -80,12 +81,12 @@ void StartCtlPDM(void const * argument) {
         }
         extern vn7004_t vn1;
         extern vn7004_t vn2;
-        extern vn7004_t vn3;
+        extern vn_double_t vn3;
         extern vn7004_t vn4;        
         vn7004_poll(&vn1);
         vn7004_poll(&vn2);        
-        vn7004_poll(&vn3);
         vn7004_poll(&vn4);
+        vn_double_poll(&vn3);
 
         uint16_t val;
         if (adc_get_ch(&adc2, 0, &val) == 0){
@@ -134,10 +135,22 @@ void StartCtlPDM(void const * argument) {
         int pump_status = pump_algo(water_level) * acc;
         (void) over_voltage;
 
+        int trim_ctl = 0;
+        if ((pdm->trim_sw[0].status == 1) && (pdm->trim_sw[1].status != -1) && 
+            (tick - pdm->trim_sw[0].update < 500) && (tick - pdm->trim_sw[1].update < 500)){
+            trim_ctl = 1;
+        }
+
+        if ((pdm->trim_sw[0].status != -1) && (pdm->trim_sw[1].status == 1) && 
+            (tick - pdm->trim_sw[0].update < 500) && (tick - pdm->trim_sw[1].update < 500)){
+            trim_ctl = -1;
+        }
+        
+        trim_ctl *= acc;
+
         vn7004_ctl(&vn1.ic[0], pump_status);
         vn7004_ctl(&vn2.ic[0], acc);
-        vn7004_ctl(&vn3.ic[0], 0);
-        vn7004_ctl(&vn3.ic[1], 0);
+        vn_double_ctl(&vn3, trim_ctl);
         vn7004_ctl(&vn4.ic[0], 1);
         vn7004_ctl(&vn4.ic[1], light * acc);
 
@@ -208,11 +221,26 @@ static void nmea_sender(void const * argument){
                 tN2kOnOff sw[28];
                 uint8_t bank;
                 ParseN2kPGN127502(&rx_msg, sw, &bank);
-                for (uint32_t i=0; i<(sizeof(pdm->sw) / sizeof(pdm->sw[0])); i++){
-                    pdm->sw[i].status = sw[i] < N2kOnOff_Error ? sw[i] : -1;
-                    pdm->sw[i].update = tick;                    
+                if (bank == KEYPAD_BANK){
+                    for (uint32_t i=0; i<(sizeof(pdm->sw) / sizeof(pdm->sw[0])); i++){
+                        pdm->sw[i].status = sw[i] < N2kOnOff_Error ? sw[i] : -1;
+                        pdm->sw[i].update = tick;                    
+                    }
                 }
+
             }
+            if ((rx_msg.PGN == 127501L) && (rx_msg.Source == 25)){
+                memcpy (rx_msg.Data, rx_fifo.data8, 8); 
+                tN2kOnOff sw[28];
+                uint8_t bank;
+                ParseN2kPGN127501(&rx_msg, sw, &bank);
+                if (bank == TRIM_BANK){
+                    for (uint32_t i=0; i<(sizeof(pdm->trim_sw) / sizeof(pdm->trim_sw[0])); i++){
+                        pdm->trim_sw[i].status = sw[i] < N2kOnOff_Error ? sw[i] : -1;
+                        pdm->trim_sw[i].update = tick;                    
+                    }
+                }
+            }            
         }
         
         static uint32_t handler_cnt = 0;

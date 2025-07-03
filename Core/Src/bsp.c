@@ -3,6 +3,7 @@
 #include "can.h"
 #include "main.h"
 #include "vn7004.h"
+#include "vn_double.h"
 #include "nmea.h"
 #include "stm32f1xx_ll_rtc.h"
 
@@ -116,7 +117,7 @@ const gpio_t gpio_a[] = {
 
     {
         .port = GPIOA,
-        .pin = LL_GPIO_PIN_10,
+        .pin = OUT4_SEN_Pin,
         .cfg = {
             .mode = LL_GPIO_MODE_OUTPUT,
             .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
@@ -150,7 +151,7 @@ const gpio_t gpio_a[] = {
 const gpio_t gpio_b[] = {
     {
         .port = GPIOB,
-        .pin = LL_GPIO_PIN_3,
+        .pin = OUT4_H_Pin,
         .cfg = {
             .mode = LL_GPIO_MODE_OUTPUT,
             .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
@@ -161,7 +162,7 @@ const gpio_t gpio_b[] = {
     },  
     {
         .port = GPIOB,
-        .pin = LL_GPIO_PIN_4,
+        .pin = OUT3_SEN_Pin,
         .cfg = {
             .mode = LL_GPIO_MODE_OUTPUT,
             .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
@@ -172,7 +173,7 @@ const gpio_t gpio_b[] = {
     },  
     {
         .port = GPIOB,
-        .pin = LL_GPIO_PIN_5,
+        .pin = OUT3_H_Pin,
         .cfg = {
             .mode = LL_GPIO_MODE_OUTPUT,
             .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
@@ -266,12 +267,7 @@ void cs1(int en){
 void cs2(int en){
     gpio_set(&gpio_a[3], en);
 }
-void cs3(int en){
-    gpio_set(&gpio_b[1], en);
-}
-void cs4(int en){
-    gpio_set(&gpio_a[6], en);
-}
+
 
 int cs5_stat = 0;
 int cs6_stat = 0;
@@ -310,26 +306,19 @@ vn7004_ic_t ic_group2 = {
     .ovc_lock_time = 0,
 
 };
-vn7004_ic_t ic_group3[] = {
-    {
-        .en_pin = &gpio_b[2],
-        .csen = cs3,
+vn_double_t vn3 = {
+        .en_n_pin = &gpio_b[2],
+        .en_p_pin = &gpio_b[0],
+        .sen_n_pin = &gpio_b[1],
+        .sen_p_pin = &gpio_a[6],
+
         .current = &ADC1->JDR3,
-        .max_current = 20000,
+        .max_current = 30000,
         .max_current_time = 1500,
         .ovc_lock_time = 0,
-
-    },
-    {
-        .en_pin = &gpio_b[0],
-        .csen = cs4,
-        .current = &ADC1->JDR3,
-        .max_current = 20000,
-        .max_current_time = 1500,
-        .ovc_lock_time = 0,
-
-    }  
+        .current_scale = (3300*1000/4096*2*16920/1780)
 };
+
 vn7004_ic_t ic_group4[] = {
     {
         .en_pin = &gpio_a[5],
@@ -358,13 +347,9 @@ vn7004_t vn1 = {
 vn7004_t vn2 = {
     .ic = &ic_group2,
     .ic_count = 1,
-    .current_scale = (3300*1000/4096*2*16720/1780)
+    .current_scale = (3300*1000/4096*2*16920/1780)
 };
-vn7004_t vn3 = {
-    .ic = ic_group3,
-    .ic_count = 2,
-    .current_scale = (3300*1000/4096*2*16720/1780)
-};
+
 vn7004_t vn4 = {
     .ic = ic_group4,
     .ic_count = 2,

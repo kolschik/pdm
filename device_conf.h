@@ -14,3 +14,6 @@
 #endif
 
 #define USE_CAN
+
+#define TRIM_BANK 2
+#define KEYPAD_BANK 3

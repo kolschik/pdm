@@ -57,6 +57,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/nmea.c
     Core/Src/vn7004.c    
     Core/Src/comm.c
+    Core/Src/vn_double.c
     #${NMEA_SRC}
 
 )

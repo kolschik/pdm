@@ -110,6 +110,22 @@ int ParseN2kPGN127502(tN2kMsg_t *N2kMsg, tN2kOnOff *sw, uint8_t *bank) {
     return 0;
 }
 
+int ParseN2kPGN127501(tN2kMsg_t *N2kMsg, tN2kOnOff *sw, uint8_t *bank) {
+    if (N2kMsg->PGN != 127501L){
+        return EINVAL;
+    }
+    uint8_t sw_num = 0;
+    *bank = N2kMsg->Data[0];
+    for (uint8_t i=7; i>=1; i--){
+        sw[sw_num++] = (N2kMsg->Data[i] >> 6) & 0x3;
+        sw[sw_num++] = (N2kMsg->Data[i] >> 4) & 0x3;
+        sw[sw_num++] = (N2kMsg->Data[i] >> 2) & 0x3;
+        sw[sw_num++] = (N2kMsg->Data[i] >> 0) & 0x3;
+    }
+
+    return 0;
+}
+
 int packN2k(tN2kMsg_t *N2kMsg, can_fifo_t *fifo){
     if (N2kMsg->PGN & 0xff){
         N2kMsg->Destination = 0xff;
