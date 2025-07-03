@@ -68,11 +68,11 @@ void StartCtlPDM(void const * argument) {
     int  over_voltage = 0;
     int light = 0;
     uint32_t acc_off_time = 0;
-    ///HAL_ADCEx_Calibration_Start(&hadc1);
-    //HAL_ADCEx_Calibration_Start(&hadc2);
-        uint8_t water_level;
-        start_adc();
-    //__HAL_TIM_ENABLE(&htim1);
+    int led_active = 0;
+
+    uint8_t water_level;
+    start_adc();
+
     for(;;) {
         if (ulTaskNotifyTake( pdTRUE, 100) == 0){
             // todo register error
@@ -124,7 +124,12 @@ void StartCtlPDM(void const * argument) {
         }
         water_level = read_pin() * acc;
 
-        led(acc);
+        int led_var = 1;
+        if ((tick > 1000) || led_active){
+            led_var = acc;
+            led_active = 1;
+        }
+        led(led_var);
         
         pump._auto = 1;
         if ((pdm->sw[0].status == 1) && (pdm->sw[1].status != -1) && 
@@ -242,7 +247,9 @@ static void nmea_sender(void const * argument){
                 }
             }            
         }
-        
+        if (pdm->acc == 0){
+            continue;
+        }
         static uint32_t handler_cnt = 0;
         extern nmea_send_handler send_handler[3];
         if (handler_cnt >= sizeof(send_handler)/sizeof(send_handler[0])){

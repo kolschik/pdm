@@ -82,7 +82,7 @@ volatile uint32_t vtor_address ;
 int main(void)
 {
  vtor_address = (uint32_t)flash_start_p;
-  SCB->VTOR = (volatile uint32_t)0x08000000;
+  SCB->VTOR = (volatile uint32_t)0x08000000 + 4096;
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
