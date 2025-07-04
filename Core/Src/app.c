@@ -38,8 +38,7 @@ static pump_t pump = {
 
 static int pump_algo(int water_level);
 
-int acc = 0;
-int acc_last = 0;
+
 
 int app_init(){
     static pdm_t pdm = {0};
@@ -69,8 +68,8 @@ void StartCtlPDM(void const * argument) {
     int light = 0;
     uint32_t acc_off_time = 0;
     int led_active = 0;
-
-    uint8_t water_level;
+    int acc = 0;
+    int acc_last = 0;
     start_adc();
 
     for(;;) {
@@ -105,7 +104,7 @@ void StartCtlPDM(void const * argument) {
             }
             pdm->batt_volt = volt_bat;
         }
-
+        pdm->acc = acc;
 
         uint32_t tick = xTaskGetTickCount();
         if (acc ^ acc_last) {
@@ -122,8 +121,8 @@ void StartCtlPDM(void const * argument) {
         if (adc_get_ch(&adc1, 0, &temper) == 0){
 
         }
-        water_level = read_pin() * acc;
-
+        pdm->water_stat = read_pin() * acc;
+         
         int led_var = 1;
         if ((tick > 1000) || led_active){
             led_var = acc;
@@ -137,7 +136,7 @@ void StartCtlPDM(void const * argument) {
                 pump.enable = pdm->sw[1].status * acc;
                 pump._auto = 0;
         }
-        int pump_status = pump_algo(water_level) * acc;
+        int pump_status = pump_algo(pdm->water_stat) * acc;
         (void) over_voltage;
 
         int trim_ctl = 0;

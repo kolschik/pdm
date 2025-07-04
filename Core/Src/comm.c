@@ -26,7 +26,8 @@ int ch_handler(tN2kMsg_t *msg, void *argument){
     pdm_t * pdm = (pdm_t *)argument;   
     if ((HAL_GetTick() - tick) < period){
         return 0;
-    }       
+    }
+    tick = HAL_GetTick();
     SetN2kPGN127751(msg, 0, pdm->batt_volt, pdm->acc_ch.current, sid++);
     return 1;    
 }
@@ -37,7 +38,8 @@ int water_handler(tN2kMsg_t *msg, void *argument){
     pdm_t * pdm = (pdm_t *)argument;      
     if ((HAL_GetTick() - tick) < period){
         return 0;
-    }    
+    }
+    tick = HAL_GetTick();
     SetN2kPGN127505(msg, 0, N2kft_Water, pdm->water_stat, 1);
     return 1;      
 }
