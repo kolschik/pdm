@@ -38,9 +38,14 @@ void SetN2kPGN127508(tN2kMsg_t *N2kMsg, uint8_t BatInst, uint16_t BatVolt, uint1
 
 
 void SetN2kPGN127501(tN2kMsg_t *N2kMsg, uint32_t bank, tN2kOnOff *sw, const uint8_t sw_num) {
-    uint64_t BankStatus = 0xffffffffffffffff;
-    for (uint8_t i=0; i<sw_num; i++){
-        BankStatus = (BankStatus << 2) | sw[i];
+    uint64_t BankStatus = 0;
+    uint8_t i=0;
+    for (;i<28; i++){
+        uint64_t sw_buf = N2kOnOff_Unavailable;
+        if (i<sw_num){
+            sw_buf = sw[i];
+        }
+        BankStatus |= sw_buf << i;
     }
     BankStatus = (BankStatus << 8) | bank;
     memcpy(N2kMsg->Data, &BankStatus, sizeof(BankStatus));
@@ -116,11 +121,11 @@ int ParseN2kPGN127501(tN2kMsg_t *N2kMsg, tN2kOnOff *sw, uint8_t *bank) {
     }
     uint8_t sw_num = 0;
     *bank = N2kMsg->Data[0];
-    for (uint8_t i=7; i>=1; i--){
-        sw[sw_num++] = (N2kMsg->Data[i] >> 6) & 0x3;
-        sw[sw_num++] = (N2kMsg->Data[i] >> 4) & 0x3;
-        sw[sw_num++] = (N2kMsg->Data[i] >> 2) & 0x3;
+    for (uint8_t i=1; i<8; i++){
         sw[sw_num++] = (N2kMsg->Data[i] >> 0) & 0x3;
+        sw[sw_num++] = (N2kMsg->Data[i] >> 2) & 0x3;
+        sw[sw_num++] = (N2kMsg->Data[i] >> 4) & 0x3;
+        sw[sw_num++] = (N2kMsg->Data[i] >> 6) & 0x3;
     }
 
     return 0;

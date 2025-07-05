@@ -71,7 +71,8 @@ void StartCtlPDM(void const * argument) {
     int acc = 0;
     int acc_last = 0;
     start_adc();
-
+    int trim_ctl_last = 0;
+    uint32_t trim_update = 0;
     for(;;) {
         if (ulTaskNotifyTake( pdTRUE, 100) == 0){
             // todo register error
@@ -104,6 +105,7 @@ void StartCtlPDM(void const * argument) {
             }
             pdm->batt_volt = volt_bat;
         }
+
         pdm->acc = acc;
 
         uint32_t tick = xTaskGetTickCount();
@@ -149,7 +151,16 @@ void StartCtlPDM(void const * argument) {
             (tick - pdm->trim_sw[0].update < 500) && (tick - pdm->trim_sw[1].update < 500)){
             trim_ctl = -1;
         }
-        
+
+
+        if (trim_ctl != trim_ctl_last){
+            trim_update = tick;
+        }
+        trim_ctl_last = trim_ctl;
+        if ((tick - trim_update) > 20000){
+            trim_ctl = 0;
+        }
+
         trim_ctl *= acc;
 
         vn7004_ctl(&vn1.ic[0], pump_status);
