@@ -105,13 +105,12 @@ int ParseN2kPGN127502(tN2kMsg_t *N2kMsg, tN2kOnOff *sw, uint8_t *bank) {
     }
     uint8_t sw_num = 0;
     *bank = N2kMsg->Data[0];
-    for (uint8_t i=7; i>=1; i--){
-        sw[sw_num++] = (N2kMsg->Data[i] >> 6) & 0x3;
-        sw[sw_num++] = (N2kMsg->Data[i] >> 4) & 0x3;
-        sw[sw_num++] = (N2kMsg->Data[i] >> 2) & 0x3;
+    for (uint8_t i=1; i<8; i++){
         sw[sw_num++] = (N2kMsg->Data[i] >> 0) & 0x3;
+        sw[sw_num++] = (N2kMsg->Data[i] >> 2) & 0x3;
+        sw[sw_num++] = (N2kMsg->Data[i] >> 4) & 0x3;
+        sw[sw_num++] = (N2kMsg->Data[i] >> 6) & 0x3;
     }
-
     return 0;
 }
 
