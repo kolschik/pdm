@@ -240,6 +240,7 @@ int pump_algo(int water_level){
 
 
 static void nmea_sender(void const * argument){ 
+    can_ctl(1);
     uint32_t send_stat = 0;    
     pdm_t * pdm = (pdm_t *)argument;
     while(1){
@@ -310,7 +311,7 @@ void vApplicationIdleHook( void ){
 }
 
 void sleep(){
-    return;
+    can_ctl(0);
     LL_ADC_Disable(adc1.a);
     LL_ADC_Disable(adc2.a);
     SysTick->CTRL  = 0;
@@ -341,5 +342,6 @@ void sleep(){
 
     LL_ADC_Enable(adc1.a);
     LL_ADC_Enable(adc2.a);
+    can_ctl(1);
 }
 

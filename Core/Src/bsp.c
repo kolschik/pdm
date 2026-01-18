@@ -429,6 +429,9 @@ void cs7(int en){
     gpio_set(OUT7_SEN_P, en);
 }
 
+void can_ctl(int en) {
+    gpio_set(CAN_EN_P, en ? 0 : 1);
+}
 int cs5_stat = 0;
 int cs6_stat = 0;
 void cs5(int en){

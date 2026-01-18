@@ -45,7 +45,7 @@ void SetN2kPGN127501(tN2kMsg_t *N2kMsg, uint32_t bank, tN2kOnOff *sw, const uint
         if (i<sw_num){
             sw_buf = sw[i];
         }
-        BankStatus |= sw_buf << i;
+        BankStatus |= sw_buf << (i * 2);
     }
     BankStatus = (BankStatus << 8) | bank;
     memcpy(N2kMsg->Data, &BankStatus, sizeof(BankStatus));
@@ -54,9 +54,14 @@ void SetN2kPGN127501(tN2kMsg_t *N2kMsg, uint32_t bank, tN2kOnOff *sw, const uint
 }
 
 void SetN2kPGN127502(tN2kMsg_t *N2kMsg, uint32_t bank, tN2kOnOff *sw, const uint8_t sw_num) {
-    uint64_t BankStatus = 0xffffffffffffffff;
-    for (uint8_t i=0; i<sw_num; i++){
-        BankStatus = (BankStatus << 2) | sw[i];
+    uint64_t BankStatus = 0;
+    uint8_t i=0;
+    for (;i<28; i++){
+        uint64_t sw_buf = N2kOnOff_Unavailable;
+        if (i<sw_num){
+            sw_buf = sw[i];
+        }
+        BankStatus |= sw_buf << (i * 2);
     }
     BankStatus = (BankStatus << 8) | bank;
     memcpy(N2kMsg->Data, &BankStatus, sizeof(BankStatus));
