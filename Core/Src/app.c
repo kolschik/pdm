@@ -6,6 +6,7 @@
 #include "nmea.h"
 #include "string.h"
 #include "stm32f1xx_ll_rtc.h"
+#include "led.h"
 
 osThreadId CtlPDMHandle;
 osThreadId CANTaskHandle;
@@ -73,6 +74,7 @@ void StartCtlPDM(void const * argument) {
     start_adc();
     int trim_ctl_last = 0;
     uint32_t trim_update = 0;
+    uint32_t comm_tick_update = 0;
     for(;;) {
         if (ulTaskNotifyTake( pdTRUE, 100) == 0){
             // todo register error
@@ -87,6 +89,7 @@ void StartCtlPDM(void const * argument) {
         vn7004_poll(&vn2);        
         vn7004_poll(&vn4);
         vn_double_poll(&vn3);
+        led_poll();
 
         uint16_t val;
         if (adc_get_ch(&adc2, 0, &val) == 0){
@@ -111,10 +114,7 @@ void StartCtlPDM(void const * argument) {
         uint32_t tick = xTaskGetTickCount();
         if (acc ^ acc_last) {
             if (acc == 0){
-                light = 0;
                 acc_off_time = tick;
-            } else if ((tick - acc_off_time) < 1000){
-                light = 1;
             }
         }
         acc_last = acc;
@@ -123,24 +123,22 @@ void StartCtlPDM(void const * argument) {
         if (adc_get_ch(&adc1, 0, &temper) == 0){
 
         }
+
+
+
+        // Секция Помпы        
         pdm->water_stat = read_pin() * acc;
          
-        int led_var = 1;
-        if ((tick > 1000) || led_active){
-            led_var = acc;
-            led_active = 1;
-        }
-        led(led_var);
-        
-        pump._auto = 1;
-        if ((pdm->sw[0].status == 1) && (pdm->sw[1].status != -1) && 
-            (tick - pdm->sw[0].update < 5000) && (tick - pdm->sw[1].update < 5000)){
-                pump.enable = pdm->sw[1].status * acc;
-                pump._auto = 0;
+        pump._auto = 1; // sw[2] - auto, sw[1] - man
+        if ((pdm->sw[1].status != -1) && (pdm->sw[2].status != -1) && 
+            (tick - pdm->sw[1].update < 5000) && (tick - pdm->sw[2].update < 5000)){
+                pump.enable = pdm->sw[1].status;
+                pump._auto = pdm->sw[2].status;
         }
         int pump_status = pump_algo(pdm->water_stat) * acc;
         (void) over_voltage;
 
+        // секция трима
         int trim_ctl = 0;
         if ((pdm->trim_sw[0].status == 1) && (pdm->trim_sw[1].status != -1) && 
             (tick - pdm->trim_sw[0].update < 500) && (tick - pdm->trim_sw[1].update < 500)){
@@ -152,7 +150,6 @@ void StartCtlPDM(void const * argument) {
             trim_ctl = -1;
         }
 
-
         if (trim_ctl != trim_ctl_last){
             trim_update = tick;
         }
@@ -160,14 +157,20 @@ void StartCtlPDM(void const * argument) {
         if ((tick - trim_update) > 20000){
             trim_ctl = 0;
         }
-
         trim_ctl *= acc;
+
+        // секция света
+        light = (pdm->sw[0].status == 1) && (tick - pdm->sw[0].update < 500) ? acc : 0;
+
+        // секция светодиода связи
+        const int comm_led_status = ((tick - pdm->sw[0].update) < 50) ? 1 : 0;
+
 
         vn7004_ctl(&vn1.ic[0], pump_status);
         vn7004_ctl(&vn2.ic[0], acc);
         vn_double_ctl(&vn3, trim_ctl);
-        vn7004_ctl(&vn4.ic[0], 1);
-        vn7004_ctl(&vn4.ic[1], light * acc);
+        vn7004_ctl(&vn4.ic[0], acc);
+        vn7004_ctl(&vn4.ic[1], light);
 
         pdm->pump_ch.current = vn7004_get_cur(&vn1.ic[0]);
         pdm->acc_ch.current = vn7004_get_cur(&vn1.ic[1]);
@@ -178,6 +181,20 @@ void StartCtlPDM(void const * argument) {
         if (((tick - acc_off_time) > 5000) && (acc == 0)){
             permit_sleep = 1;
         }
+
+        if ((tick > 1000) || led_active){
+            led_active = 1;
+            led_change_index(0, acc);
+            led_change_index(1, comm_led_status);
+            led_change_index(2, 0);
+        } else {
+            led_change_index(0, 1);
+            led_change_index(1, 1);
+            led_change_index(2, 1);            
+        }
+
+
+
         if (permit_sleep) {
             sleep();
         }
@@ -231,7 +248,7 @@ static void nmea_sender(void const * argument){
             tN2kMsg_t rx_msg;
             uint32_t tick = xTaskGetTickCount();
             CanIdToN2k(rx_fifo.id, &rx_msg);
-            if ((rx_msg.PGN == 127502L) && (rx_msg.Source == ('K' ^ 'E' ^ 'Y' ^ 'P' ^ 'A' ^ 'D'))){
+            if ((rx_msg.PGN == 127502L) && (rx_msg.Source == (0xff & ('k'+ 'e' + 'y' + 'p'+ 'a'+ 'd')))){
                 memcpy (rx_msg.Data, rx_fifo.data8, 8); 
                 tN2kOnOff sw[28];
                 uint8_t bank;
@@ -293,6 +310,7 @@ void vApplicationIdleHook( void ){
 }
 
 void sleep(){
+    return;
     LL_ADC_Disable(adc1.a);
     LL_ADC_Disable(adc2.a);
     SysTick->CTRL  = 0;

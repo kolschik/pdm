@@ -57,7 +57,7 @@ uint32_t flash_start_p;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
+
 static void MX_DMA_Init(void);
 
 //static void MX_IWDG_Init(void);
@@ -82,7 +82,7 @@ volatile uint32_t vtor_address ;
 int main(void)
 {
  vtor_address = (uint32_t)flash_start_p;
-  SCB->VTOR = (volatile uint32_t)0x08000000 + 4096;
+  SCB->VTOR = (volatile uint32_t)0x08000000 ;
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -105,7 +105,7 @@ int main(void)
 
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+
   MX_DMA_Init();
   //MX_ADC1_Init();
   //MX_ADC2_Init();
@@ -252,66 +252,6 @@ static void MX_DMA_Init(void)
   NVIC_SetPriority(DMA1_Channel1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
-}
-
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
-
-  /* GPIO Ports Clock Enable */
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOC);
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOD);
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
-
-  /**/
-  LL_GPIO_ResetOutputPin(LED_GPIO_Port, LED_Pin);
-
-  /**/
-  LL_GPIO_ResetOutputPin(GPIOA, OUT1_SEN_Pin|OUT1_H_Pin|OUT2_H_Pin|OUT2_SEN_Pin
-                          |OUT56_SEN_Pin|OUT4_SEN_Pin);
-
-  /**/
-  LL_GPIO_ResetOutputPin(GPIOB, OUT56_SEL_Pin|OUT4_H_Pin|OUT3_SEN_Pin
-                          |OUT3_H_Pin|OUT3_L_Pin|OUT4_L_Pin);
-
-  /**/
-  GPIO_InitStruct.Pin = LED_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  LL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = OUT1_SEN_Pin|OUT1_H_Pin|OUT2_H_Pin|OUT2_SEN_Pin
-                          |OUT56_SEN_Pin|OUT4_SEN_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = WATER_DET_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_FLOATING;
-  LL_GPIO_Init(WATER_DET_GPIO_Port, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = OUT56_SEL_Pin|OUT4_H_Pin|OUT3_SEN_Pin
-                          |OUT3_H_Pin|OUT3_L_Pin|OUT4_L_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */

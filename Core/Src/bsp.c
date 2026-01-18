@@ -6,6 +6,7 @@
 #include "vn_double.h"
 #include "nmea.h"
 #include "stm32f1xx_ll_rtc.h"
+#include "led.h"
 
 const can_baud_t baud_250[] = {
     {
@@ -43,10 +44,33 @@ can_t can1 = {
     .tx_cmpl = can_tx_cb
 };
 
+#define TERM_P &gpio_a[0]
+#define OUT1_EN_P &gpio_a[1]
+#define OUT1_SEN_P &gpio_a[2]
+#define OUT1_CS_P &gpio_a[3]
+#define OUT7_CS_P &gpio_a[4]
+#define OUT5_CS_P &gpio_a[5]
+#define OUT3_CS_P &gpio_a[6]
+#define OUT2_CS_P &gpio_a[7]
+#define OUT5_SEN_P &gpio_a[8]
+#define OUT5_EN_P &gpio_a[9]
+#define OUT4_SEN_P &gpio_a[12]
+
+#define LED_ERR_P &gpio_c[0]
+#define LED_ACC_P &gpio_c[1]
+
 const gpio_t gpio_a[] = {
     {
         .port = GPIOA,
-        .pin = LL_GPIO_PIN_1,
+        .pin = LL_GPIO_PIN_0,
+        .cfg = {
+            .mode = LL_GPIO_MODE_FLOATING,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+        }
+    },
+    {
+        .port = OUT1_H_GPIO_Port,
+        .pin = OUT1_H_Pin,
         .cfg = {
             .mode = LL_GPIO_MODE_OUTPUT,
             .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
@@ -56,8 +80,8 @@ const gpio_t gpio_a[] = {
         }
     },    
     {
-        .port = GPIOA,
-        .pin = LL_GPIO_PIN_2,
+        .port = OUT1_SEN_GPIO_Port,
+        .pin = OUT1_SEN_Pin,
         .cfg = {
             .mode = LL_GPIO_MODE_OUTPUT,
             .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
@@ -67,25 +91,43 @@ const gpio_t gpio_a[] = {
         }
     },
     {
-        .port = GPIOA,
-        .pin = LL_GPIO_PIN_3,
+        .port = OUT1_CS_GPIO_Port,
+        .pin = OUT1_CS_Pin,
         .cfg = {
-            .mode = LL_GPIO_MODE_OUTPUT,
-            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .mode = LL_GPIO_MODE_FLOATING,
             .freq = LL_GPIO_SPEED_FREQ_HIGH, 
-            .pull = LL_GPIO_PULL_DOWN,
-            .init_val = 0            
         }
     },
     {
         .port = GPIOA,
-        .pin = LL_GPIO_PIN_4,
+        .pin = OUT7_CS_Pin,
         .cfg = {
-            .mode = LL_GPIO_MODE_OUTPUT,
-            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .mode = LL_GPIO_MODE_FLOATING,
             .freq = LL_GPIO_SPEED_FREQ_HIGH, 
-            .pull = LL_GPIO_PULL_DOWN,
-            .init_val = 0
+        }
+    },
+    {
+        .port = GPIOA,
+        .pin = OUT56_CS_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_FLOATING,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+        }
+    },
+    {
+        .port = GPIOA,
+        .pin = OUT34_CS_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_FLOATING,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+        }
+    },
+    {
+        .port = GPIOA,
+        .pin = OUT2_CS_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_FLOATING,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
         }
     },
     {
@@ -99,7 +141,6 @@ const gpio_t gpio_a[] = {
             .init_val = 0
         }
     },
-
     {
         .port = OUT5_EN_GPIO_Port,
         .pin = OUT5_EN_Pin,
@@ -112,21 +153,7 @@ const gpio_t gpio_a[] = {
         }
     },
 
-
-
-
-    {
-        .port = GPIOA,
-        .pin = OUT4_SEN_Pin,
-        .cfg = {
-            .mode = LL_GPIO_MODE_OUTPUT,
-            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
-            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
-            .pull = LL_GPIO_PULL_DOWN,
-            .init_val = 0
-        }
-    },
-
+    // CAN RX
     {
         .port = GPIOA,
         .pin = LL_GPIO_PIN_11,
@@ -135,7 +162,7 @@ const gpio_t gpio_a[] = {
             .freq = LL_GPIO_SPEED_FREQ_HIGH, 
         }
     },
-
+    // CAN_TX
     {
         .port = GPIOA,
         .pin = LL_GPIO_PIN_12,
@@ -145,12 +172,67 @@ const gpio_t gpio_a[] = {
             .freq = LL_GPIO_SPEED_FREQ_HIGH, 
         }
     },
+    {
+        .port = OUT4_SEN_GPIO_Port,
+        .pin = OUT4_SEN_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .init_val = 0
+        }
+    },
 };
 
+#define ACC_P &gpio_b[0]
+#define OUT2_EN_P &gpio_b[1]
+#define OUT2_SEN_P &gpio_b[2]
+#define OUT4_H_P &gpio_b[3]
+#define OUT3_SEN_P &gpio_b[4]
+#define OUT3_H_P &gpio_b[5]
+#define OUT4_L_P &gpio_b[6]
+#define OUT3_L_P &gpio_b[7]
+#define CAN_EN_P &gpio_b[8]
+#define LED_CON_P &gpio_b[9]
+#define OUT7_EN_P &gpio_b[10]
+#define OUT7_SEN_P &gpio_b[11]
+#define WATER_KEY_P &gpio_b[12]
+#define OUT6_EN_P &gpio_b[13]
+#define OUT5_SEL_P &gpio_b[14]
 
 const gpio_t gpio_b[] = {
     {
         .port = GPIOB,
+        .pin = LL_GPIO_PIN_0,
+        .cfg = {
+            .mode = LL_GPIO_MODE_FLOATING,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+        }
+    },  
+    {
+        .port = GPIOB,
+        .pin = OUT2_H_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },  
+    {
+        .port = GPIOB,
+        .pin = OUT2_SEN_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },  
+    {
+        .port = OUT4_H_GPIO_Port,
         .pin = OUT4_H_Pin,
         .cfg = {
             .mode = LL_GPIO_MODE_OUTPUT,
@@ -161,7 +243,7 @@ const gpio_t gpio_b[] = {
         }
     },  
     {
-        .port = GPIOB,
+        .port = OUT3_SEN_GPIO_Port,
         .pin = OUT3_SEN_Pin,
         .cfg = {
             .mode = LL_GPIO_MODE_OUTPUT,
@@ -172,7 +254,7 @@ const gpio_t gpio_b[] = {
         }
     },  
     {
-        .port = GPIOB,
+        .port = OUT3_H_GPIO_Port,
         .pin = OUT3_H_Pin,
         .cfg = {
             .mode = LL_GPIO_MODE_OUTPUT,
@@ -182,7 +264,72 @@ const gpio_t gpio_b[] = {
             .init_val = 0
         }
     },  
-
+    {
+        .port = OUT4_L_GPIO_Port,
+        .pin = OUT4_L_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },  
+    {
+        .port = OUT3_L_GPIO_Port,
+        .pin = OUT3_L_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    }, 
+    {
+        .port = CAN_EN_GPIO_Port,
+        .pin = CAN_EN_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    }, 
+    {
+        .port = LED3_GPIO_Port,
+        .pin = LED3_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    }, 
+    {
+        .port = OUT7_H_GPIO_Port,
+        .pin = OUT7_H_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },  
+    {
+        .port = OUT7_SEN_GPIO_Port,
+        .pin = OUT7_SEN_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    },  
     {
         .port = GPIOB,
         .pin = LL_GPIO_PIN_12,
@@ -219,8 +366,18 @@ const gpio_t gpio_b[] = {
 
 const gpio_t gpio_c[] = {
     {
-        .port = GPIOC,
-        .pin = LL_GPIO_PIN_13,
+        .port = LED1_GPIO_Port,
+        .pin = LED1_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .init_val = 0
+        }
+    },
+    {
+        .port = LED2_GPIO_Port,
+        .pin = LED2_Pin,
         .cfg = {
             .mode = LL_GPIO_MODE_OUTPUT,
             .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
@@ -233,8 +390,8 @@ const gpio_t gpio_c[] = {
 
 const uint32_t adc1_reg[] = {LL_ADC_CHANNEL_TEMPSENSOR};
 const uint32_t adc2_reg[] = {LL_ADC_CHANNEL_8};
-const uint32_t adc1_inj[] = {LL_ADC_CHANNEL_0, LL_ADC_CHANNEL_5, LL_ADC_CHANNEL_6, LL_ADC_CHANNEL_7};
-
+const uint32_t adc1_inj[] = {LL_ADC_CHANNEL_3, LL_ADC_CHANNEL_7, LL_ADC_CHANNEL_6, LL_ADC_CHANNEL_5};
+const uint32_t adc2_inj[] = {LL_ADC_CHANNEL_4, LL_ADC_CHANNEL_0, LL_ADC_CHANNEL_8};
 
 const adc_t adc1 = {
     .reg_channels = adc1_reg,
@@ -250,8 +407,9 @@ const adc_t adc1 = {
 const adc_t adc2 = {
     .reg_channels = adc2_reg,
     .reg_channels_num = sizeof(adc2_reg) / sizeof(adc2_reg[0]),
-    .inj_channels_num = 0,
-    .inj_channels_trig = 0,
+    .inj_channels = adc2_inj,
+    .inj_channels_num = sizeof(adc2_inj) / sizeof(adc2_inj[0]),
+    .inj_channels_trig = LL_ADC_INJ_TRIG_EXT_TIM1_TRGO,//LL_ADC_INJ_TRIG_EXT_TIM1_TRGO,LL_ADC_INJ_TRIG_SOFTWARE
     .cb = adc2_cb,
     .sampling_time = LL_ADC_SAMPLINGTIME_28CYCLES_5,
     .a = ADC2
@@ -262,34 +420,36 @@ tmr_cc_t tim1 = {
 };
 
 void cs1(int en){
-    gpio_set(&gpio_a[0], en);
+    gpio_set(OUT1_SEN_P, en);
 }
 void cs2(int en){
-    gpio_set(&gpio_a[3], en);
+    gpio_set(OUT2_SEN_P, en);
 }
-
+void cs7(int en){
+    gpio_set(OUT7_SEN_P, en);
+}
 
 int cs5_stat = 0;
 int cs6_stat = 0;
 void cs5(int en){
     cs5_stat = en;
-    gpio_set(&gpio_a[4], cs5_stat | cs6_stat);
+    gpio_set(OUT5_SEN_P, cs5_stat | cs6_stat);
     if (en == 1){
-        gpio_set(&gpio_b[5], en ^ 0x01);
+        gpio_set(OUT5_SEL_P, 0);
     }
 }
 void cs6(int en){
     cs6_stat = en;
-    gpio_set(&gpio_a[4], cs5_stat | cs6_stat);
+    gpio_set(OUT5_SEN_P, cs5_stat | cs6_stat);
     if (en == 1){
-        gpio_set(&gpio_b[5], en);
+        gpio_set(OUT5_SEL_P, 1);
     }
 }
 
 uint16_t current_key[4];
 
 vn7004_ic_t ic_group1 = {
-    .en_pin = &gpio_a[1],
+    .en_pin = OUT1_EN_P,
     .csen = cs1,
     .current = &ADC1->JDR1,
     .max_current = 15000,
@@ -298,7 +458,7 @@ vn7004_ic_t ic_group1 = {
 
 };
 vn7004_ic_t ic_group2 = {
-    .en_pin = &gpio_a[2],
+    .en_pin = OUT2_EN_P,
     .csen = cs2,
     .current = &ADC1->JDR2,
     .max_current = 15000,
@@ -306,11 +466,12 @@ vn7004_ic_t ic_group2 = {
     .ovc_lock_time = 0,
 
 };
+
 vn_double_t vn3 = {
-        .en_n_pin = &gpio_b[2],
-        .en_p_pin = &gpio_b[0],
-        .sen_n_pin = &gpio_b[1],
-        .sen_p_pin = &gpio_a[6],
+        .en_n_pin = OUT3_H_P,
+        .en_p_pin = OUT4_H_P,
+        .sen_n_pin = OUT3_SEN_P,
+        .sen_p_pin = OUT4_SEN_P,
 
         .current = &ADC1->JDR3,
         .max_current = 30000,
@@ -321,7 +482,7 @@ vn_double_t vn3 = {
 
 vn7004_ic_t ic_group4[] = {
     {
-        .en_pin = &gpio_a[5],
+        .en_pin = OUT5_EN_P,
         .csen = cs5,
         .current = &ADC1->JDR4,
         .max_current = 2500,
@@ -330,7 +491,7 @@ vn7004_ic_t ic_group4[] = {
 
     },
     {
-        .en_pin = &gpio_b[4],
+        .en_pin = OUT6_EN_P,
         .csen = cs6,
         .current = &ADC1->JDR4,
         .max_current = 2500,
@@ -356,6 +517,25 @@ vn7004_t vn4 = {
     .current_scale = (3300*1000/4096*2*500/1000)
 };
 
+led_t led_acc = {
+    .gpio = LED_ACC_P,
+    .inv = 0
+};
+led_t led_conn  = {
+    .gpio = LED_CON_P,
+    .inv = 0    
+};
+led_t led_err  = {
+    .gpio = LED_ERR_P,
+    .inv = 0    
+};
+led_t *led_p[] = { &led_acc, &led_conn, &led_err};
+
+leds_t led = {
+    .led = led_p,
+    .led_num = sizeof(led_p) / sizeof(led_p[0])
+};
+
 int bsp_init(){
     int rv = 0;
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
@@ -375,6 +555,7 @@ int bsp_init(){
     tim_set_freq(&tim1, 500);
     tim_enable(&tim1);
 
+    led_init(&led);
     can_init(&can1);
     can_start();
 
@@ -410,14 +591,11 @@ int bsp_init(){
 #define CAN1_RX0_IRQHandler           USB_LP_CAN1_RX0_IRQHandler
 uint8_t read_pin(){
     uint8_t pin_status = 0;
-    pin_status |= gpio_read(&gpio_b[3]) << 0;
+    pin_status |= gpio_read(WATER_KEY_P) << 0;
     pin_status ^= 0x01;
     return pin_status;
 }
 
-void led(int stat){
-    gpio_set(&gpio_c[0], stat);
-}
 
 
 void ctl_can_bus(int stat){

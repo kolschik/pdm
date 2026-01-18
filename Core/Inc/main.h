@@ -70,23 +70,27 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LED_Pin LL_GPIO_PIN_13
-#define LED_GPIO_Port GPIOC
-#define OUT1_CS_Pin LL_GPIO_PIN_0
+#define LED1_Pin LL_GPIO_PIN_13
+#define LED1_GPIO_Port GPIOC
+#define LED2_Pin LL_GPIO_PIN_14
+#define LED2_GPIO_Port GPIOC
+#define LED3_Pin LL_GPIO_PIN_9
+#define LED3_GPIO_Port GPIOB
+#define OUT1_CS_Pin LL_GPIO_PIN_3
 #define OUT1_CS_GPIO_Port GPIOA
-#define OUT1_SEN_Pin LL_GPIO_PIN_1
+#define OUT1_SEN_Pin LL_GPIO_PIN_2
 #define OUT1_SEN_GPIO_Port GPIOA
-#define OUT1_H_Pin LL_GPIO_PIN_2
+#define OUT1_H_Pin LL_GPIO_PIN_1
 #define OUT1_H_GPIO_Port GPIOA
-#define OUT2_H_Pin LL_GPIO_PIN_3
-#define OUT2_H_GPIO_Port GPIOA
-#define OUT2_SEN_Pin LL_GPIO_PIN_4
+#define OUT2_H_Pin LL_GPIO_PIN_1
+#define OUT2_H_GPIO_Port GPIOB
+#define OUT2_SEN_Pin LL_GPIO_PIN_2
 #define OUT2_SEN_GPIO_Port GPIOA
-#define OUT2_CS_Pin LL_GPIO_PIN_5
+#define OUT2_CS_Pin LL_GPIO_PIN_7
 #define OUT2_CS_GPIO_Port GPIOA
 #define OUT34_CS_Pin LL_GPIO_PIN_6
 #define OUT34_CS_GPIO_Port GPIOA
-#define OUT56_CS_Pin LL_GPIO_PIN_7
+#define OUT56_CS_Pin LL_GPIO_PIN_5
 #define OUT56_CS_GPIO_Port GPIOA
 #define BAT_METER_Pin LL_GPIO_PIN_0
 #define BAT_METER_GPIO_Port GPIOB
@@ -100,7 +104,7 @@ void Error_Handler(void);
 #define OUT56_SEN_GPIO_Port GPIOA
 #define OUT5_EN_Pin LL_GPIO_PIN_9
 #define OUT5_EN_GPIO_Port GPIOA
-#define OUT4_SEN_Pin LL_GPIO_PIN_10
+#define OUT4_SEN_Pin LL_GPIO_PIN_15
 #define OUT4_SEN_GPIO_Port GPIOA
 #define OUT4_H_Pin LL_GPIO_PIN_3
 #define OUT4_H_GPIO_Port GPIOB
@@ -108,10 +112,18 @@ void Error_Handler(void);
 #define OUT3_SEN_GPIO_Port GPIOB
 #define OUT3_H_Pin LL_GPIO_PIN_5
 #define OUT3_H_GPIO_Port GPIOB
-#define OUT3_L_Pin LL_GPIO_PIN_6
+#define OUT3_L_Pin LL_GPIO_PIN_7
 #define OUT3_L_GPIO_Port GPIOB
-#define OUT4_L_Pin LL_GPIO_PIN_7
+#define OUT4_L_Pin LL_GPIO_PIN_6
 #define OUT4_L_GPIO_Port GPIOB
+#define OUT7_CS_Pin LL_GPIO_PIN_4
+#define OUT7_CS_GPIO_Port GPIOA
+#define CAN_EN_Pin LL_GPIO_PIN_8
+#define CAN_EN_GPIO_Port GPIOB
+#define OUT7_H_Pin LL_GPIO_PIN_10
+#define OUT7_H_GPIO_Port GPIOB
+#define OUT7_SEN_Pin LL_GPIO_PIN_11
+#define OUT7_SEN_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
