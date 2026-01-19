@@ -22,13 +22,19 @@ int batt_handler(tN2kMsg_t *msg, void *argument){
 int ch_handler(tN2kMsg_t *msg, void *argument){
     static uint32_t tick = 0;
     static uint8_t sid= 0;
+    static uint8_t instance = 0;
     const uint32_t period = 100;
     pdm_t * pdm = (pdm_t *)argument;   
     if ((HAL_GetTick() - tick) < period){
         return 0;
     }
+
     tick = HAL_GetTick();
-    SetN2kPGN127751(msg, 0, pdm->batt_volt, pdm->acc_ch.current, sid++);
+    SetN2kPGN127751(msg, instance, pdm->out[instance].voltage, pdm->out[instance].current, sid++);
+    instance++;
+    if (instance >= (sizeof(pdm->out) / sizeof(pdm->out[0]))){
+        instance = 0;
+    }
     return 1;    
 }
 

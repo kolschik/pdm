@@ -5,6 +5,7 @@
 #include "cmsis_os.h"
 
 typedef struct {
+    uint16_t voltage;
     uint32_t status;
     uint16_t current;
 } pdm_ch_t;
@@ -15,11 +16,7 @@ typedef struct {
 } pdm_in_sw_t;
 
 typedef struct {
-    pdm_ch_t acc_ch;
-    pdm_ch_t pump_ch;
-    pdm_ch_t light_ch;
-    pdm_ch_t can_ch;
-
+    pdm_ch_t out[8];
     uint16_t batt_volt;
     uint32_t acc;
     pdm_in_sw_t sw[8];

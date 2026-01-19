@@ -503,6 +503,15 @@ vn7004_ic_t ic_group4[] = {
     }  
 };
 
+vn7004_ic_t ic_group5 = {
+    .en_pin = OUT7_EN_P,
+    .csen = cs7,
+    .current = &ADC2->JDR1,
+    .max_current = 15000,
+    .max_current_time = 1500,
+    .ovc_lock_time = 0,
+};
+
 vn7004_t vn1 = {
     .ic = &ic_group1,
     .ic_count = 1,
@@ -518,6 +527,12 @@ vn7004_t vn4 = {
     .ic = ic_group4,
     .ic_count = 2,
     .current_scale = (3300*1000/4096*2*500/1000)
+};
+
+vn7004_t vn7 = {
+    .ic = &ic_group5,
+    .ic_count = 1,
+    .current_scale = (3300*1000/4096*2*16920/1780)
 };
 
 led_t led_acc = {
@@ -607,6 +622,7 @@ void ctl_can_bus(int stat){
 
 void start_adc(){
     LL_ADC_INJ_StartConversionExtTrig(adc1.a, LL_ADC_INJ_TRIG_EXT_RISING);
+    LL_ADC_INJ_StartConversionExtTrig(adc2.a, LL_ADC_INJ_TRIG_EXT_RISING);
 }
 /*
 HAL_GPIO_WritePin(OUT1_SEN_GPIO_Port, OUT1_SEN_Pin, GPIO_PIN_SET);

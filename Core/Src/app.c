@@ -66,7 +66,8 @@ void StartCtlPDM(void const * argument) {
     int permit_sleep = 0;  
     uint32_t volt_bat = 0;
     int  over_voltage = 0;
-    int light = 0;
+    int horn_last = -1;
+    uint32_t horn_start = 0;
     uint32_t acc_off_time = 0;
     int led_active = 0;
     int acc = 0;
@@ -81,13 +82,13 @@ void StartCtlPDM(void const * argument) {
 
             continue;
         }
-        extern vn7004_t vn1;
-        extern vn7004_t vn2;
+        extern vn7004_t vn1, vn2, vn4, vn7;
         extern vn_double_t vn3;
-        extern vn7004_t vn4;        
+   
         vn7004_poll(&vn1);
         vn7004_poll(&vn2);        
         vn7004_poll(&vn4);
+        vn7004_poll(&vn7);
         vn_double_poll(&vn3);
         led_poll();
 
@@ -98,7 +99,7 @@ void StartCtlPDM(void const * argument) {
                 permit_sleep = 0;                
                 acc = 1;
             }
-            if (volt_bat < 8000) {
+            if (volt_bat < 5000) {
                 acc = 0;
             }
             over_voltage = 0;
@@ -136,6 +137,18 @@ void StartCtlPDM(void const * argument) {
                 pump._auto = pdm->sw[2].status;
         }
         int pump_status = pump_algo(pdm->water_stat) * acc;
+
+        //секция горна
+        int horn = (pdm->sw[3].status == 1) && (tick - pdm->sw[3].update < 500) ? acc : 0;
+        if ((horn == 1) && (horn_last == 0)) {
+            horn_start = tick;
+        }
+        horn_last = horn;
+        if ((tick - horn_start) > 10000) {
+            horn = 0;
+        }
+
+
         (void) over_voltage;
 
         // секция трима
@@ -160,7 +173,7 @@ void StartCtlPDM(void const * argument) {
         trim_ctl *= acc;
 
         // секция света
-        light = (pdm->sw[0].status == 1) && (tick - pdm->sw[0].update < 500) ? acc : 0;
+        int light = (pdm->sw[0].status == 1) && (tick - pdm->sw[0].update < 500) ? acc : 0;
 
         // секция светодиода связи
         const int comm_led_status = ((tick - pdm->sw[0].update) < 50) ? 1 : 0;
@@ -171,12 +184,23 @@ void StartCtlPDM(void const * argument) {
         vn_double_ctl(&vn3, trim_ctl);
         vn7004_ctl(&vn4.ic[0], acc);
         vn7004_ctl(&vn4.ic[1], light);
+        vn7004_ctl(&vn7.ic[0], horn);
 
-        pdm->pump_ch.current = vn7004_get_cur(&vn1.ic[0]);
-        pdm->acc_ch.current = vn7004_get_cur(&vn1.ic[1]);
+        pdm->out[0].current = vn7004_get_cur(&vn1.ic[0]);
+        pdm->out[0].voltage = pump_status * pdm->batt_volt;
 
-        pdm->can_ch.current = vn7004_get_cur(&vn4.ic[0]);
-        pdm->light_ch.current = vn7004_get_cur(&vn4.ic[1]);
+        pdm->out[1].current = vn7004_get_cur(&vn2.ic[0]);
+        pdm->out[1].voltage = acc * pdm->batt_volt;
+
+        pdm->out[2].current = vn7004_get_cur(&vn7.ic[0]);
+        pdm->out[2].voltage = horn * pdm->batt_volt;
+
+        pdm->out[3].current = vn7004_get_cur(&vn4.ic[0]);
+        pdm->out[3].voltage = acc * pdm->batt_volt;
+
+        pdm->out[4].current = vn7004_get_cur(&vn4.ic[1]);
+        pdm->out[4].voltage = light * pdm->batt_volt;
+
 
         if (((tick - acc_off_time) > 5000) && (acc == 0)){
             permit_sleep = 1;
@@ -311,6 +335,7 @@ void vApplicationIdleHook( void ){
 }
 
 void sleep(){
+    return;
     can_ctl(0);
     LL_ADC_Disable(adc1.a);
     LL_ADC_Disable(adc2.a);
