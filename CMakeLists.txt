@@ -54,7 +54,7 @@ file(GLOB_RECURSE NMEA_SRC
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/app.c
     Core/Src/bsp.c
-    Core/Src/nmea.c
+    nmea2k/nmea2k.c
     Core/Src/led.c
     Core/Src/vn7004.c    
     Core/Src/comm.c
@@ -66,7 +66,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${STM_LIB_INC_DIR}
-    NMEA2000/src
+    nmea2k
 )
 
 # Add project symbols (macros)

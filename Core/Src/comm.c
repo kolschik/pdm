@@ -1,4 +1,4 @@
-#include "nmea.h"
+#include "nmea2k.h"
 #include "app.h"
 
 int batt_handler();
@@ -30,7 +30,7 @@ int ch_handler(tN2kMsg_t *msg, void *argument){
     }
 
     tick = HAL_GetTick();
-    SetN2kPGN127751(msg, instance, pdm->out[instance].voltage, pdm->out[instance].current, sid++);
+    SetN2kPGN127751(msg, instance, (pdm->out[instance].voltage + 50) / 100, (pdm->out[instance].current + 5) / 10, sid++);
     instance++;
     if (instance >= (sizeof(pdm->out) / sizeof(pdm->out[0]))){
         instance = 0;

@@ -36,7 +36,7 @@ typedef struct {
     led_mode_t mode;
     led_color_t color;
     uint16_t counter;
-    gpio_t * const gpio; 
+    const gpio_t * const gpio; 
     const uint8_t inv;  // Инвертировать уровни
 }led_t;
 

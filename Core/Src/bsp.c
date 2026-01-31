@@ -4,7 +4,7 @@
 #include "main.h"
 #include "vn7004.h"
 #include "vn_double.h"
-#include "nmea.h"
+#include "nmea2k.h"
 #include "stm32f1xx_ll_rtc.h"
 #include "led.h"
 
