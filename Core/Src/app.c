@@ -265,7 +265,8 @@ int pump_algo(int water_level){
 
 static void nmea_sender(void const * argument){ 
     can_ctl(1);
-    uint32_t send_stat = 0;    
+    static uint32_t send_stat = 0;
+    static uint32_t fail_stat = 0;
     pdm_t * pdm = (pdm_t *)argument;
     while(1){
         can_fifo_t rx_fifo;
@@ -311,9 +312,12 @@ static void nmea_sender(void const * argument){
         if (send_handler[handler_cnt++](&msg, pdm)){
             can_fifo_t tx_fifo;
             packN2k(&msg, &tx_fifo);
-            if (can_tx(tx_fifo, 10)) {
+            if (can_tx(tx_fifo, 10) == 0) {
                 send_stat++;
-            }            
+            } else {
+                fail_stat++;
+                can_get_error();
+            }
         }
     }
 }
