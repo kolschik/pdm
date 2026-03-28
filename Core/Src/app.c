@@ -175,8 +175,6 @@ void StartCtlPDM(void const * argument) {
         // секция света
         int light = (pdm->sw[0].status == 1) && (tick - pdm->sw[0].update < 500) ? acc : 0;
 
-        // секция светодиода связи
-        const int comm_led_status = ((tick - pdm->sw[0].update) < 50) ? 1 : 0;
 
 
         vn7004_ctl(&vn1.ic[0], pump_status);
@@ -209,7 +207,19 @@ void StartCtlPDM(void const * argument) {
         if ((tick > 1000) || led_active){
             led_active = 1;
             led_change_index(0, acc);
-            led_change_index(1, comm_led_status);
+
+            // секция светодиода связи
+            led_mode_t comm_led_mode = led_off;
+            if (pdm->can_fault == ENODEV) {
+                comm_led_mode = led_flash_l;
+            } else if (pdm->can_fault == EFAULT) {
+                comm_led_mode = led_blink;
+            } else if ((tick - pdm->sw[0].update) < 500){
+                comm_led_mode = led_on;
+            }
+            led_change_index(1, comm_led_mode);
+
+
             led_change_index(2, 0);
         } else {
             led_change_index(0, 1);
@@ -267,6 +277,8 @@ static void nmea_sender(void const * argument){
     can_ctl(1);
     static uint32_t send_stat = 0;
     static uint32_t fail_stat = 0;
+    uint32_t can_reg_fail_tick = 0;
+    uint32_t can_reg_fail = 0;
     pdm_t * pdm = (pdm_t *)argument;
     while(1){
         can_fifo_t rx_fifo;
@@ -308,16 +320,31 @@ static void nmea_sender(void const * argument){
         if (handler_cnt >= sizeof(send_handler)/sizeof(send_handler[0])){
             handler_cnt = 0;
         }
-        tN2kMsg_t msg;        
+        tN2kMsg_t msg; 
+        uint32_t now = xTaskGetTickCount();
+        int can_error = -1;
         if (send_handler[handler_cnt++](&msg, pdm)){
             can_fifo_t tx_fifo;
             packN2k(&msg, &tx_fifo);
+
             if (can_tx(tx_fifo, 10) == 0) {
+                can_reg_fail = 0;
                 send_stat++;
             } else {
+                if (can_reg_fail == 0) {
+                    can_reg_fail_tick = now;
+                    can_reg_fail = 1;
+                }
+
                 fail_stat++;
-                can_get_error();
+                can_error = can_get_error();
             }
+        }
+        if (can_reg_fail && (now - can_reg_fail_tick > 500)){
+
+            pdm->can_fault = can_error < 0 ? pdm->can_fault : can_error == 3 ? ENODEV : EFAULT;
+        } else if (can_reg_fail == 0) {
+            pdm->can_fault = 0;
         }
     }
 }
@@ -327,7 +354,7 @@ void can_rx_cb (can_fifo_t *fifo){
     xQueueSendFromISR(RxQueueHandle, fifo, 0);
 }
 
-void can_tx_cb(uint8_t *tx_slot){
+void can_tx_cb(int8_t *tx_slot){
     (void)tx_slot;
     BaseType_t not = 0;
     vTaskNotifyGiveFromISR(CANTaskHandle, &not);

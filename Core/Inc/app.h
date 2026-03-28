@@ -22,6 +22,9 @@ typedef struct {
     pdm_in_sw_t sw[8];
     pdm_in_sw_t trim_sw[4];
     int water_stat;
+
+
+    int can_fault;
 }pdm_t;
 
 typedef struct
@@ -42,4 +45,4 @@ void adc1_cb();
 void adc2_cb();
 
 void can_rx_cb (can_fifo_t *fifo);
-void can_tx_cb(uint8_t *tx_slot);
+void can_tx_cb(int8_t *tx_slot);
