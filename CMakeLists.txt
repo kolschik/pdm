@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-if(PDM_BOOT MATCHES ON)
+if(CMAKE_BUILD_TYPE MATCHES Release-bootloader OR CMAKE_BUILD_TYPE MATCHES Debug-bootloader )
     message("Build bootloadet for pdm")  
     # Set the project name
     set(CMAKE_PROJECT_NAME pdm_boot)    
@@ -14,7 +14,7 @@ if(PDM_BOOT MATCHES ON)
         -DNO_INTERRUPT
     )
 endif()
-if(PDM_BOOT MATCHES OFF)
+if(CMAKE_BUILD_TYPE MATCHES Release-loader OR CMAKE_BUILD_TYPE MATCHES Debug-loader )
     message("Build pdm")  
     set(CMAKE_PROJECT_NAME pdm)
     add_definitions(      

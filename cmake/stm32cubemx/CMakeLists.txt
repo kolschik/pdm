@@ -23,7 +23,7 @@ target_include_directories(stm32cubemx INTERFACE
     ../../Drivers/CMSIS/Device/ST/STM32F1xx/Include
     ../../Drivers/CMSIS/Include
 )
-if(PDM_BOOT MATCHES OFF)
+if(CMAKE_BUILD_TYPE MATCHES Release-loader OR CMAKE_BUILD_TYPE MATCHES Debug-loader )
     target_sources(stm32cubemx INTERFACE
         ../../Middlewares/Third_Party/FreeRTOS/Source/croutine.c
         ../../Middlewares/Third_Party/FreeRTOS/Source/event_groups.c

@@ -47,8 +47,8 @@ osThreadId InputTaskHandle;
 uint32_t InputTaskBuffer[ 128 ];
 osStaticThreadDef_t InputTaskControlBlock;
 
-uint32_t flash_start_p;
-static void MX_DMA_Init(void);
+
+
 void StartInputTask(void const * argument);
 extern uint32_t SystemCoreClock;
 volatile uint32_t vtor_address ;
@@ -60,8 +60,7 @@ void SystemClock_Config(void);
 
 int main(void) {
 #if !defined PDM_BOOT
-    vtor_address = (uint32_t)flash_start_p;
-    SCB->VTOR = (volatile uint32_t)0x08000000 ;
+    SCB->VTOR = (volatile uint32_t)0x08001000 ;
 
     HAL_Init();
 #endif
@@ -70,6 +69,8 @@ int main(void) {
 
 
 #if defined PDM_BOOT
+    __HAL_RCC_AFIO_CLK_ENABLE();
+    __HAL_AFIO_REMAP_SWJ_NOJTAG();
 	  __disable_irq(); // запрещаем прерывания  
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA | LL_APB2_GRP1_PERIPH_GPIOB);
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);  
