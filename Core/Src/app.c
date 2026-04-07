@@ -367,7 +367,7 @@ void vApplicationIdleHook( void ){
 }
 
 void sleep(){
-    return;
+
     can_ctl(0);
     LL_ADC_Disable(adc1.a);
     LL_ADC_Disable(adc2.a);
