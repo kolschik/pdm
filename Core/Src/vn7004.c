@@ -22,7 +22,7 @@ void vn7004_poll(vn7004_t *vn_p){
 #if defined (FREERTOS)
     uint32_t tick = xTaskGetTickCount();
 #else
-    uint32_t tick = HAL_GetTickCount();
+    uint32_t tick = HAL_GetTick();
 #endif
     const uint32_t stage = vn_p->counter % STAGE_COUNT;
 

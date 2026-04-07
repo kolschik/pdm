@@ -1,25 +1,31 @@
-cmake_minimum_required(VERSION 3.22)
-
-#
-# This file is generated only once,
-# and is not re-generated if converter is called multiple times.
-#
-# User is free to modify the file as much as necessary
-#
+cmake_minimum_required(VERSION 3.12)
 
 # Setup compiler settings
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
+if(PDM_BOOT MATCHES ON)
+    message("Build bootloadet for pdm")  
+    # Set the project name
+    set(CMAKE_PROJECT_NAME pdm_boot)    
+    add_definitions(      
+        -DPDM_BOOT
+        -DNO_INTERRUPT
+    )
+endif()
+if(PDM_BOOT MATCHES OFF)
+    message("Build pdm")  
+    set(CMAKE_PROJECT_NAME pdm)
+    add_definitions(      
+        -DFREERTOS
+    )    
+endif()
 
 # Define the build type
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug")
 endif()
-
-# Set the project name
-set(CMAKE_PROJECT_NAME pdm)
 
 # Include toolchain file
 include("cmake/gcc-arm-none-eabi.cmake")
@@ -72,6 +78,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
+    -DFREERTOS
 )
 
 # Add linked libraries

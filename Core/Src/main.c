@@ -1,171 +1,105 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
 #include "bsp.h"
 #include "app.h"
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 
-/* USER CODE END Includes */
+#if defined PDM_BOOT
+#include "gpio.h"
+#include "boot.h"
+const gpio_t gpio_a[] = {
+    // CAN RX
+    {
+        .port = GPIOA,
+        .pin = LL_GPIO_PIN_11,
+        .cfg = {
+            .mode = LL_GPIO_MODE_FLOATING,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+        }
+    },
+    // CAN_TX
+    {
+        .port = GPIOA,
+        .pin = LL_GPIO_PIN_12,
+        .cfg = {
+            .mode = LL_GPIO_MODE_ALTERNATE,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+        }
+    },
+    {
+        .port = CAN_EN_GPIO_Port,
+        .pin = CAN_EN_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }
+    }
+};
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-
-
-
+extern can_t can1;
+#else 
 osThreadId InputTaskHandle;
 uint32_t InputTaskBuffer[ 128 ];
 osStaticThreadDef_t InputTaskControlBlock;
 
-
-/* USER CODE BEGIN PV */
 uint32_t flash_start_p;
-/* USER CODE END PV */
+static void MX_DMA_Init(void);
+void StartInputTask(void const * argument);
+extern uint32_t SystemCoreClock;
+volatile uint32_t vtor_address ;
 
-/* Private function prototypes -----------------------------------------------*/
+#endif
+
 void SystemClock_Config(void);
 
-static void MX_DMA_Init(void);
 
-//static void MX_IWDG_Init(void);
+int main(void) {
+#if !defined PDM_BOOT
+    vtor_address = (uint32_t)flash_start_p;
+    SCB->VTOR = (volatile uint32_t)0x08000000 ;
 
+    HAL_Init();
+#endif
 
-
-void StartInputTask(void const * argument);
-
-/* USER CODE BEGIN PFP */
-extern uint32_t SystemCoreClock;
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-volatile uint32_t vtor_address ;
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
-int main(void)
-{
- vtor_address = (uint32_t)flash_start_p;
-  SCB->VTOR = (volatile uint32_t)0x08000000 ;
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
+    SystemClock_Config();
 
 
-  /* Initialize all configured peripherals */
+#if defined PDM_BOOT
+	  __disable_irq(); // запрещаем прерывания  
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA | LL_APB2_GRP1_PERIPH_GPIOB);
+    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);  
 
-  MX_DMA_Init();
-  //MX_ADC1_Init();
-  //MX_ADC2_Init();
-  //MX_IWDG_Init();
+    gpio_init(gpio_a, sizeof(gpio_a) / sizeof(gpio_t));
+
+    can_init(&can1);
+
+    can_start();
+    try_boot();
+#else
+
     if (bsp_init()){
         while(1);
     }
-  /* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
-
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
-
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
-
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
-
-  /* Create the queue(s) */
-  /* definition and creation of RxQueue */
-
-
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
     app_init();
-  /* Create the thread(s) */
-  /* definition and creation of CANTask */
+
+    osThreadStaticDef(InputTask, StartInputTask, osPriorityNormal, 0, 128, InputTaskBuffer, &InputTaskControlBlock);
+    InputTaskHandle = osThreadCreate(osThread(InputTask), NULL);
+
+    osKernelStart();
+#endif
 
 
+    while (1)
+    {
 
+    }
 
-
-  /* definition and creation of InputTask */
-  osThreadStaticDef(InputTask, StartInputTask, osPriorityNormal, 0, 128, InputTaskBuffer, &InputTaskControlBlock);
-  InputTaskHandle = osThreadCreate(osThread(InputTask), NULL);
-
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
-
-  /* Start scheduler */
-  osKernelStart();
-
-  /* We should never get here as control is now taken by the scheduler */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
 }
 
 /**
@@ -211,12 +145,18 @@ void SystemClock_Config(void)
 
   }
   LL_SetSystemCoreClock(48000000);
+#if defined PDM_BOOT
+  LL_SetSystemCoreClock(8000000);
+  LL_Init1msTick(8000000);
+#else
   //LL_Init1msTick(48000000);
    /* Update the time base */
   if (HAL_InitTick (TICK_INT_PRIORITY) != HAL_OK)
   {
     Error_Handler();
   }
+#endif
+
   LL_RCC_SetADCClockSource(LL_RCC_ADC_CLKSRC_PCLK2_DIV_4);
 }
 
@@ -237,28 +177,8 @@ static void MX_IWDG_Init(void)
 
 }
 */
-/**
-  * Enable DMA controller clock
-  */
-static void MX_DMA_Init(void)
-{
-
-  /* Init with LL driver */
-  /* DMA controller clock enable */
-  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
-
-  /* DMA interrupt init */
-  /* DMA1_Channel1_IRQn interrupt configuration */
-  NVIC_SetPriority(DMA1_Channel1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
-  NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-
-}
-
-/* USER CODE BEGIN 4 */
 
 uint32_t volt;
-/* USER CODE END 4 */
-
 
 
 /* USER CODE BEGIN Header_StartInputTask */

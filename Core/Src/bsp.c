@@ -1,12 +1,9 @@
 #include "bsp.h"
 #include "app.h"
 #include "can.h"
-#include "main.h"
-#include "vn7004.h"
-#include "vn_double.h"
-#include "nmea2k.h"
-#include "stm32f1xx_ll_rtc.h"
-#include "led.h"
+#if !defined PDM_BOOT
+#include "app.h"
+#endif
 
 const can_baud_t baud_250[] = {
     {
@@ -27,8 +24,6 @@ const can_filt_t can_filters[] = {
     }
 };
 
-
-
 const can_cfg_t can_cfg = {
     .baudrate = baud_250,
     .filter = can_filters,
@@ -40,9 +35,22 @@ const can_cfg_t can_cfg = {
 can_t can1 = {
     .can = CAN1,
     .cfg = &can_cfg,
+#if !defined PDM_BOOT    
     .rx_cmpl = can_rx_cb,
     .tx_cmpl = can_tx_cb
+#endif
 };
+
+
+#if !defined PDM_BOOT
+#include "main.h"
+#include "vn7004.h"
+#include "vn_double.h"
+#include "nmea2k.h"
+#include "stm32f1xx_ll_rtc.h"
+#include "led.h"
+
+
 
 #define TERM_P &gpio_a[0]
 #define OUT1_EN_P &gpio_a[1]
@@ -562,7 +570,9 @@ int bsp_init(){
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC1);
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC2);
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
-    
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+
+
     rv |= gpio_init(gpio_a, sizeof(gpio_a) / sizeof(gpio_t));    
     rv |= gpio_init(gpio_b, sizeof(gpio_b) / sizeof(gpio_t));
     rv |= gpio_init(gpio_c, sizeof(gpio_c) / sizeof(gpio_t));
@@ -596,6 +606,9 @@ int bsp_init(){
    //vn7004_init(key, sizeof(key) / sizeof(key[0]));
     HAL_NVIC_SetPriority(RTC_Alarm_IRQn, 6, 0);
     HAL_NVIC_EnableIRQ(RTC_Alarm_IRQn);
+
+    // NVIC_SetPriority(DMA1_Channel1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+    // NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
     HAL_NVIC_SetPriority(CAN1_TX_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(CAN1_TX_IRQn);
@@ -635,3 +648,5 @@ void rtc_handler(){
         LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_17);
     }
 }
+
+#endif

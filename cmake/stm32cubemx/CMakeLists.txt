@@ -23,6 +23,19 @@ target_include_directories(stm32cubemx INTERFACE
     ../../Drivers/CMSIS/Device/ST/STM32F1xx/Include
     ../../Drivers/CMSIS/Include
 )
+if(PDM_BOOT MATCHES OFF)
+    target_sources(stm32cubemx INTERFACE
+        ../../Middlewares/Third_Party/FreeRTOS/Source/croutine.c
+        ../../Middlewares/Third_Party/FreeRTOS/Source/event_groups.c
+        ../../Middlewares/Third_Party/FreeRTOS/Source/list.c
+        ../../Middlewares/Third_Party/FreeRTOS/Source/queue.c
+        ../../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c
+        ../../Middlewares/Third_Party/FreeRTOS/Source/tasks.c
+        ../../Middlewares/Third_Party/FreeRTOS/Source/timers.c
+        ../../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c
+        ../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3/port.c
+    )
+endif()
 
 target_sources(stm32cubemx INTERFACE
     ../../Core/Src/main.c
@@ -50,19 +63,12 @@ target_sources(stm32cubemx INTERFACE
     ../../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_ll_tim.c
     ../../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_ll_rtc.c
     ../../Core/Src/system_stm32f1xx.c
-    ../../Middlewares/Third_Party/FreeRTOS/Source/croutine.c
-    ../../Middlewares/Third_Party/FreeRTOS/Source/event_groups.c
-    ../../Middlewares/Third_Party/FreeRTOS/Source/list.c
-    ../../Middlewares/Third_Party/FreeRTOS/Source/queue.c
-    ../../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c
-    ../../Middlewares/Third_Party/FreeRTOS/Source/tasks.c
-    ../../Middlewares/Third_Party/FreeRTOS/Source/timers.c
-    ../../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c
-    ../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3/port.c
     ../../Core/Src/sysmem.c
     ../../Core/Src/syscalls.c
     ../../startup_stm32f103xb.s
 )
+
+
 
 target_link_directories(stm32cubemx INTERFACE
 )

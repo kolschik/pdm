@@ -76,6 +76,7 @@ void StartCtlPDM(void const * argument) {
     int trim_ctl_last = 0;
     uint32_t trim_update = 0;
     uint32_t comm_tick_update = 0;
+    (void)comm_tick_update;
     for(;;) {
         if (ulTaskNotifyTake( pdTRUE, 100) == 0){
             // todo register error

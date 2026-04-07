@@ -9,11 +9,17 @@
 #ifndef USE_FULL_LL_DRIVER
 #define USE_FULL_LL_DRIVER
 #endif
-#ifndef FREERTOS
-#define FREERTOS
-#endif
 
 #define USE_CAN
+#define USE_CAN_BOOT
 
 #define TRIM_BANK 2
 #define KEYPAD_BANK 3
+
+#define USE_FLASH
+
+#define MIN_FLASH 4
+#define MAX_FLASH 64
+
+#define BOOTLOADER_VERSION 0x11
+#define DEVNAME "pdm "
