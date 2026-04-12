@@ -76,6 +76,8 @@ void StartCtlPDM(void const * argument) {
     int trim_ctl_last = 0;
     uint32_t trim_update = 0;
     uint32_t comm_tick_update = 0;
+    static uint32_t tm_buf[8] = {0};
+    static int tm_idx = 0;
     (void)comm_tick_update;
     for(;;) {
         if (ulTaskNotifyTake( pdTRUE, 100) == 0){
@@ -121,13 +123,19 @@ void StartCtlPDM(void const * argument) {
         }
         acc_last = acc;
 
+
         uint16_t temper;
         if (adc_get_ch(&adc1, 0, &temper) == 0){
 
         }
 
-
-
+        uint32_t tm_adc = (ADC2->JDR2 * 3300 + 2048) / 4096;
+        tm_buf[tm_idx++ & (sizeof(tm_buf) / sizeof(tm_buf[0]) - 1)] = tm_adc;
+        volatile uint32_t tm_volt = 0;
+        for (uint32_t i = 0; i < sizeof(tm_buf) / sizeof(tm_buf[0]); i++){
+            tm_volt += tm_buf[i];
+        }
+        tm_volt = (tm_volt + sizeof(tm_buf) / sizeof(tm_buf[0]) / 2) / sizeof(tm_buf) / sizeof(tm_buf[0]);
         // Секция Помпы        
         pdm->water_stat = read_pin() * acc;
          
@@ -187,19 +195,27 @@ void StartCtlPDM(void const * argument) {
 
         pdm->out[0].current = vn7004_get_cur(&vn1.ic[0]);
         pdm->out[0].voltage = pump_status * pdm->batt_volt;
+        pdm->out[0].status = (uint32_t)vn7004_get_status(&vn1.ic[0]);
 
         pdm->out[1].current = vn7004_get_cur(&vn2.ic[0]);
         pdm->out[1].voltage = acc * pdm->batt_volt;
+        pdm->out[1].status = (uint32_t)vn7004_get_status(&vn2.ic[0]);
 
         pdm->out[2].current = vn7004_get_cur(&vn7.ic[0]);
         pdm->out[2].voltage = horn * pdm->batt_volt;
+        pdm->out[2].status = (uint32_t)vn7004_get_status(&vn7.ic[0]);
 
         pdm->out[3].current = vn7004_get_cur(&vn4.ic[0]);
         pdm->out[3].voltage = acc * pdm->batt_volt;
+        pdm->out[3].status = (uint32_t)vn7004_get_status(&vn4.ic[0]);
 
         pdm->out[4].current = vn7004_get_cur(&vn4.ic[1]);
         pdm->out[4].voltage = light * pdm->batt_volt;
+        pdm->out[4].status = (uint32_t)vn7004_get_status(&vn4.ic[0]);
 
+        pdm->out[5].current = vn_double_get_cur(&vn3);
+        pdm->out[5].voltage = trim_ctl < 0 ? -1 : trim_ctl * pdm->batt_volt;
+        pdm->out[5].status = (uint32_t)vn_double_get_status(&vn3);
 
         if (((tick - acc_off_time) > 5000) && (acc == 0)){
             permit_sleep = 1;
@@ -220,12 +236,25 @@ void StartCtlPDM(void const * argument) {
             }
             led_change_index(1, comm_led_mode);
 
+            int ch_fault = 0;
+            for (uint32_t i = 0; i<(sizeof(pdm->out) / sizeof(pdm->out[0])); i++) {
+                if (pdm->out[0].status == (uint32_t)vn7004_state_ocp 
+                                    || (pdm->out[0].status == (uint32_t)vn7004_state_short_gnd)) {
+                    ch_fault = EFAULT;                    
+                }
+            }
 
-            led_change_index(2, 0);
+            led_mode_t err_led_mode = led_off;
+            if (pdm->otp) {
+                err_led_mode = led_on;    
+            } else if (ch_fault == EFAULT) {
+                comm_led_mode = led_flash_l;
+            }
+            led_change_index(2, err_led_mode);
         } else {
-            led_change_index(0, 1);
-            led_change_index(1, 1);
-            led_change_index(2, 1);            
+            led_change_index(0, led_on);
+            led_change_index(1, led_on);
+            led_change_index(2, led_on);            
         }
 
 

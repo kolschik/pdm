@@ -10,9 +10,9 @@ mkdir $BUILD_DIR
 mkdir bin
 
 
-cd $BUILD_DIR && cmake -DCMAKE_BUILD_TYPE=Release-bootloader .. && make -j
-cp -fr pdm_boot.bin ../bin/ && cd ..
-rm -R $BUILD_DIR/*
+# cd $BUILD_DIR && cmake -DCMAKE_BUILD_TYPE=Release-bootloader .. && make -j
+# cp -fr pdm_boot.bin ../bin/ && cd ..
+# rm -R $BUILD_DIR/*
 
-cd $BUILD_DIR && cmake -DCMAKE_BUILD_TYPE=Release-loader .. && make -j
+cd $BUILD_DIR && cmake -DCMAKE_BUILD_TYPE=Debug-loader .. && make -j
 cp -fr pdm.bin ../bin/ && cd ..

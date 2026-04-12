@@ -13,9 +13,13 @@ typedef enum {
 
 
 typedef struct {
+    const gpio_t *en_p2_pin;
+    const gpio_t *en_p_pin;
+
+    const gpio_t *en_n2_pin;
     const gpio_t *en_n_pin;
-    const gpio_t *en_p_pin;    
-    const gpio_t *sen_n_pin;
+
+    const gpio_t *sen_p2_pin;
     const gpio_t *sen_p_pin;    
     volatile uint32_t *const current;
 
@@ -23,7 +27,6 @@ typedef struct {
     const uint32_t max_current_time;
     const uint32_t ovc_lock_time;
     const uint32_t current_scale; /// =3300000*2*K/(R * 4096)
-
 
     int enable;
     vn_double_stat_t status;
@@ -34,4 +37,11 @@ typedef struct {
 
 void vn_double_poll(vn_double_t *vn_p);
 void vn_double_ctl(vn_double_t *vn_ic, int en);
-int vn_double_get_cur (vn_double_t *vn_ic);
+
+inline int vn_double_get_cur (vn_double_t *vn_ic){
+    return vn_ic->current_ma;
+}
+
+inline vn_double_stat_t vn_double_get_status(vn_double_t *vn_ic){
+    return vn_ic->state;
+}

@@ -60,7 +60,7 @@ void SystemClock_Config(void);
 
 int main(void) {
 #if !defined PDM_BOOT
-    SCB->VTOR = (volatile uint32_t)0x08001000 ;
+    SCB->VTOR = (volatile uint32_t)0x08000000 ;
 
     HAL_Init();
 #endif

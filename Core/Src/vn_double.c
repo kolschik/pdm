@@ -23,16 +23,16 @@ void vn_double_poll(vn_double_t *ic){
         if (ic->enable > 0){
             gpio_set(ic->sen_p_pin, 1);
         } else {
-            gpio_set(ic->sen_n_pin, 1);
+            gpio_set(ic->sen_p2_pin, 1);
         }
     }
 
     switch (ic->state){
     case vn_double_state_off:
         gpio_set(ic->sen_p_pin, 0);
-        gpio_set(ic->sen_n_pin, 0);
+        gpio_set(ic->sen_p2_pin, 0);
         gpio_set(ic->en_p_pin, 0);
-        gpio_set(ic->en_n_pin, 0);                                    
+        gpio_set(ic->en_p2_pin, 0);                                    
         if (ic->enable != 0){            
             ic->counter = tick;
             ic->state = vn_double_state_check;
@@ -47,7 +47,7 @@ void vn_double_poll(vn_double_t *ic){
         if (ic->enable > 0){
             gpio_set(ic->en_p_pin, 1);
         } else {
-            gpio_set(ic->en_n_pin, 1);
+            gpio_set(ic->en_p2_pin, 1);
         }
         ic->state = vn_double_state_on;
         break;
@@ -60,13 +60,13 @@ void vn_double_poll(vn_double_t *ic){
         }
         if (*ic->current > vn7004_short_current) {
             ic->counter = tick;
-            gpio_set(ic->en_n_pin, 0);
+            gpio_set(ic->en_p2_pin, 0);
             gpio_set(ic->en_p_pin, 0);            
             ic->state = vn_double_state_short_gnd;
         }
         if ((tick - ic->counter) > ic->max_current_time) {
             ic->counter = tick;
-            gpio_set(ic->en_n_pin, 0);
+            gpio_set(ic->en_p2_pin, 0);
             gpio_set(ic->en_p_pin, 0);    
             ic->state = vn_double_state_ocp;
         }
@@ -82,7 +82,7 @@ void vn_double_poll(vn_double_t *ic){
             if (ic->enable > 0){
                 gpio_set(ic->en_p_pin, 1);
             } else {
-                gpio_set(ic->en_n_pin, 1);
+                gpio_set(ic->en_p2_pin, 1);
             }
             ic->state = vn_double_state_on;
         }
@@ -96,6 +96,3 @@ void vn_double_ctl(vn_double_t *vn_ic, int en){
     }
 }
 
-int vn_double_get_cur (vn_double_t *vn_ic){
-    return vn_ic->current_ma;
-}

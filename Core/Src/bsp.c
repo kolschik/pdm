@@ -479,9 +479,9 @@ vn7004_ic_t ic_group2 = {
 };
 
 vn_double_t vn3 = {
-        .en_n_pin = OUT3_H_P,
+        .en_p2_pin = OUT3_H_P,
         .en_p_pin = OUT4_H_P,
-        .sen_n_pin = OUT3_SEN_P,
+        .sen_p2_pin = OUT3_SEN_P,
         .sen_p_pin = OUT4_SEN_P,
 
         .current = &ADC1->JDR3,

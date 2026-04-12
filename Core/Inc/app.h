@@ -23,7 +23,7 @@ typedef struct {
     pdm_in_sw_t trim_sw[4];
     int water_stat;
 
-
+    int otp;
     int can_fault;
 }pdm_t;
 

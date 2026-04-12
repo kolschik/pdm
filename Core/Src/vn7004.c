@@ -126,11 +126,3 @@ void vn7004_poll(vn7004_t *vn_p){
     }
 
 }
-
-void vn7004_ctl(vn7004_ic_t *vn_ic, uint32_t en){
-    vn_ic->enable = en;
-}
-
-int vn7004_get_cur (vn7004_ic_t *vn_ic){
-    return vn_ic->current_ma;
-}

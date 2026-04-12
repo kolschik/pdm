@@ -69,7 +69,7 @@ void led_poll() {
             break;     
         case led_blink:
             if (leds->led[i]->counter < SHORT_FLASH_PERIOD_MS){
-                black = 0;
+                black ^= 1;
             } else if (leds->led[i]->counter >= LONG_FLASH_PERIOD_MS) {
                 leds->led[i]->counter = 0;
             }        
