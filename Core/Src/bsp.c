@@ -396,7 +396,7 @@ const gpio_t gpio_c[] = {
 };
 
 
-const uint32_t adc1_reg[] = {LL_ADC_CHANNEL_TEMPSENSOR};
+const uint32_t adc1_reg[] = {LL_ADC_CHANNEL_TEMPSENSOR, LL_ADC_CHANNEL_VREFINT};
 const uint32_t adc2_reg[] = {LL_ADC_CHANNEL_8};
 const uint32_t adc1_inj[] = {LL_ADC_CHANNEL_3, LL_ADC_CHANNEL_7, LL_ADC_CHANNEL_6, LL_ADC_CHANNEL_5};
 const uint32_t adc2_inj[] = {LL_ADC_CHANNEL_4, LL_ADC_CHANNEL_0, LL_ADC_CHANNEL_8};

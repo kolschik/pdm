@@ -25,11 +25,15 @@ static void StartCtlPDM(void const * argument);
 static void nmea_sender(void const * argument);
 void SystemClock_Config(void);
 void sleep();
-
+uint32_t tm_convert(uint32_t Rtm);
 extern adc_t adc1;
 extern adc_t adc2;
 
-
+uint32_t tm_lut[] = {160, 179, 202, 227, 257, 292, 333, 379,
+    427, 491, 567, 657, 763, 890, 1044, 1228,
+    1452, 1725, 2058, 2466, 2968,  3588, 4357, 5318,
+    6523, 8047, 10000, 12461, 15652, 19783, 25152, 32116,
+    41306, 53280, 68982, 89682, 117280 };
 
 static pump_t pump = {
     ._auto = 1,
@@ -60,25 +64,23 @@ int app_init(){
     return 0;
 }
 
-
+uint32_t Rtm;
 void StartCtlPDM(void const * argument) {
     pdm_t *pdm = (pdm_t *)argument;
-    int permit_sleep = 0;  
-    uint32_t volt_bat = 0;
-    int  over_voltage = 0;
-    int horn_last = -1;
-    uint32_t horn_start = 0;
-    uint32_t acc_off_time = 0;
-    int led_active = 0;
-    int acc = 0;
-    int acc_last = 0;
-    start_adc();
-    int trim_ctl_last = 0;
-    uint32_t trim_update = 0;
-    uint32_t comm_tick_update = 0;
+    static int permit_sleep = 0;  
+    static uint32_t volt_bat = 0;
+    static int  over_voltage = 0;
+    static int horn_last = -1;
+    static uint32_t horn_start = 0;
+    static uint32_t acc_off_time = 0;
+    static int led_active = 0;
+    static int acc = 0;
+    static int acc_last = 0;
+    static int trim_ctl_last = 0;
+    static uint32_t trim_update = 0;
     static uint32_t tm_buf[8] = {0};
     static int tm_idx = 0;
-    (void)comm_tick_update;
+    start_adc();
     for(;;) {
         if (ulTaskNotifyTake( pdTRUE, 100) == 0){
             // todo register error
@@ -124,18 +126,22 @@ void StartCtlPDM(void const * argument) {
         acc_last = acc;
 
 
-        uint16_t temper;
-        if (adc_get_ch(&adc1, 0, &temper) == 0){
-
-        }
-
-        uint32_t tm_adc = (ADC2->JDR2 * 3300 + 2048) / 4096;
-        tm_buf[tm_idx++ & (sizeof(tm_buf) / sizeof(tm_buf[0]) - 1)] = tm_adc;
-        volatile uint32_t tm_volt = 0;
+        tm_buf[tm_idx++ & (sizeof(tm_buf) / sizeof(tm_buf[0]) - 1)] = ADC2->JDR2;
+        uint32_t tm_adc = 0;
         for (uint32_t i = 0; i < sizeof(tm_buf) / sizeof(tm_buf[0]); i++){
-            tm_volt += tm_buf[i];
+            tm_adc += tm_buf[i];
         }
-        tm_volt = (tm_volt + sizeof(tm_buf) / sizeof(tm_buf[0]) / 2) / sizeof(tm_buf) / sizeof(tm_buf[0]);
+        const uint32_t buf_size = sizeof(tm_buf) / sizeof(tm_buf[0]);
+
+        tm_adc = (tm_adc * 3300 + 2048 * buf_size) / (4096 * buf_size);
+        if ((tm_adc < 3172) && (tm_adc > 121)) {
+            Rtm = 4700 * tm_adc / (3300 - tm_adc);
+            tm_convert(Rtm);
+        } else {
+            Rtm = UINT32_MAX;
+        }
+
+
         // Секция Помпы        
         pdm->water_stat = read_pin() * acc;
          
@@ -431,3 +437,28 @@ void sleep(){
     can_ctl(1);
 }
 
+int mid_idx;
+uint32_t tm_convert(uint32_t Rtm) {
+    int high = 36;
+    int low = 0;
+    if((Rtm < tm_lut[low]) || (Rtm > tm_lut[high])){
+        return UINT32_MAX;
+    }
+
+    while (1) {
+        mid_idx = (low + high) / 2;
+        if (Rtm < tm_lut[mid_idx]) {
+            high = mid_idx;
+        } else if (Rtm > tm_lut[mid_idx]) {
+            low = mid_idx;
+        } else {
+            break;
+        }
+        if (high - low <= 1) {
+            mid_idx = low;
+            break;
+        }
+    }
+
+    return 0;
+}
