@@ -25,6 +25,7 @@ typedef struct {
 
     int otp;
     int can_fault;
+    int board_temper;
 }pdm_t;
 
 typedef struct

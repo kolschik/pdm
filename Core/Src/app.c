@@ -7,6 +7,7 @@
 #include "string.h"
 #include "stm32f1xx_ll_rtc.h"
 #include "led.h"
+#include "tm.h"
 
 osThreadId CtlPDMHandle;
 osThreadId CANTaskHandle;
@@ -59,7 +60,6 @@ int app_init(){
     return 0;
 }
 
-uint32_t Rtm;
 void StartCtlPDM(void const * argument) {
     pdm_t *pdm = (pdm_t *)argument;
     static int permit_sleep = 0;  
@@ -73,8 +73,7 @@ void StartCtlPDM(void const * argument) {
     static int acc_last = 0;
     static int trim_ctl_last = 0;
     static uint32_t trim_update = 0;
-    static uint32_t tm_buf[8] = {0};
-    static int tm_idx = 0;
+
     start_adc();
     for(;;) {
         if (ulTaskNotifyTake( pdTRUE, 100) == 0){
@@ -121,6 +120,9 @@ void StartCtlPDM(void const * argument) {
         acc_last = acc;
 
 
+        // Контроль температуры платы
+        static int tm_idx = 0;
+        static uint32_t tm_buf[8] = {0};        
         tm_buf[tm_idx++ & (sizeof(tm_buf) / sizeof(tm_buf[0]) - 1)] = ADC2->JDR2;
         uint32_t tm_adc = 0;
         for (uint32_t i = 0; i < sizeof(tm_buf) / sizeof(tm_buf[0]); i++){
@@ -130,12 +132,17 @@ void StartCtlPDM(void const * argument) {
 
         tm_adc = (tm_adc * 3300 + 2048 * buf_size) / (4096 * buf_size);
         if ((tm_adc < 3172) && (tm_adc > 121)) {
-            Rtm = 4700 * tm_adc / (3300 - tm_adc);
-            tm_convert(Rtm);
+            uint32_t Rtm = 4700 * tm_adc / (3300 - tm_adc);
+            pdm->board_temper = tm_convert(Rtm);
+            if ((pdm->otp == 1) && (pdm->board_temper < 50)) {
+                pdm->otp = 0;
+            }
+            if ((pdm->otp == 0) && (pdm->board_temper > 75)) {
+                pdm->otp = 1;
+            }            
         } else {
-            Rtm = UINT32_MAX;
+            pdm->board_temper = INT32_MAX;
         }
-
 
         // Секция Помпы        
         pdm->water_stat = read_pin() * acc;
