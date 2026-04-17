@@ -25,15 +25,10 @@ static void StartCtlPDM(void const * argument);
 static void nmea_sender(void const * argument);
 void SystemClock_Config(void);
 void sleep();
-uint32_t tm_convert(uint32_t Rtm);
+
 extern adc_t adc1;
 extern adc_t adc2;
 
-uint32_t tm_lut[] = {160, 179, 202, 227, 257, 292, 333, 379,
-    427, 491, 567, 657, 763, 890, 1044, 1228,
-    1452, 1725, 2058, 2466, 2968,  3588, 4357, 5318,
-    6523, 8047, 10000, 12461, 15652, 19783, 25152, 32116,
-    41306, 53280, 68982, 89682, 117280 };
 
 static pump_t pump = {
     ._auto = 1,
@@ -435,30 +430,4 @@ void sleep(){
     LL_ADC_Enable(adc1.a);
     LL_ADC_Enable(adc2.a);
     can_ctl(1);
-}
-
-int mid_idx;
-uint32_t tm_convert(uint32_t Rtm) {
-    int high = 36;
-    int low = 0;
-    if((Rtm < tm_lut[low]) || (Rtm > tm_lut[high])){
-        return UINT32_MAX;
-    }
-
-    while (1) {
-        mid_idx = (low + high) / 2;
-        if (Rtm < tm_lut[mid_idx]) {
-            high = mid_idx;
-        } else if (Rtm > tm_lut[mid_idx]) {
-            low = mid_idx;
-        } else {
-            break;
-        }
-        if (high - low <= 1) {
-            mid_idx = low;
-            break;
-        }
-    }
-
-    return 0;
 }
