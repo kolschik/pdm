@@ -102,8 +102,8 @@ void StartCtlPDM(void const * argument) {
                 acc = 0;
             }
             over_voltage = 0;
-            if (volt_bat > 16500){
-                acc = 0;
+            if (volt_bat > 18000){
+                acc = 1;
                 over_voltage = 1;
             }
             pdm->batt_volt = volt_bat;
@@ -134,10 +134,10 @@ void StartCtlPDM(void const * argument) {
         if ((tm_adc < 3172) && (tm_adc > 121)) {
             uint32_t Rtm = 4700 * tm_adc / (3300 - tm_adc);
             pdm->board_temper = tm_convert(Rtm);
-            if ((pdm->otp == 1) && (pdm->board_temper < 50)) {
+            if ((pdm->otp == 1) && (pdm->board_temper < 5000)) {
                 pdm->otp = 0;
             }
-            if ((pdm->otp == 0) && (pdm->board_temper > 75)) {
+            if ((pdm->otp == 0) && (pdm->board_temper > 7500)) {
                 pdm->otp = 1;
             }            
         } else {
@@ -166,8 +166,6 @@ void StartCtlPDM(void const * argument) {
         }
 
 
-        (void) over_voltage;
-
         // секция трима
         int trim_ctl = 0;
         if ((pdm->trim_sw[0].status == 1) && (pdm->trim_sw[1].status != -1) && 
@@ -193,36 +191,42 @@ void StartCtlPDM(void const * argument) {
         int light = (pdm->sw[0].status == 1) && (tick - pdm->sw[0].update < 500) ? acc : 0;
 
 
+        uint8_t out1 = over_voltage || pdm->otp ? 0 : pump_status;
+        uint8_t out2 = over_voltage || pdm->otp ? 0 : acc;
+        int8_t out6 = over_voltage || pdm->otp ? 0 : trim_ctl;
+        uint8_t out3 = over_voltage || pdm->otp ? 0 : horn;
+        uint8_t out4 = over_voltage ? 0 : acc;
+        uint8_t out5 = over_voltage ? 0 : light;
 
-        vn7004_ctl(&vn1.ic[0], pump_status);
-        vn7004_ctl(&vn2.ic[0], acc);
-        vn_double_ctl(&vn3, trim_ctl);
-        vn7004_ctl(&vn4.ic[0], acc);
-        vn7004_ctl(&vn4.ic[1], light);
-        vn7004_ctl(&vn7.ic[0], horn);
+        vn7004_ctl(&vn1.ic[0], out1);
+        vn7004_ctl(&vn2.ic[0], out2);
+        vn_double_ctl(&vn3, out6);
+        vn7004_ctl(&vn4.ic[0], out4);
+        vn7004_ctl(&vn4.ic[1], out5);
+        vn7004_ctl(&vn7.ic[0], out3);
 
         pdm->out[0].current = vn7004_get_cur(&vn1.ic[0]);
-        pdm->out[0].voltage = pump_status * pdm->batt_volt;
+        pdm->out[0].voltage = out1 * pdm->batt_volt;
         pdm->out[0].status = (uint32_t)vn7004_get_status(&vn1.ic[0]);
 
         pdm->out[1].current = vn7004_get_cur(&vn2.ic[0]);
-        pdm->out[1].voltage = acc * pdm->batt_volt;
+        pdm->out[1].voltage = out2 * pdm->batt_volt;
         pdm->out[1].status = (uint32_t)vn7004_get_status(&vn2.ic[0]);
 
         pdm->out[2].current = vn7004_get_cur(&vn7.ic[0]);
-        pdm->out[2].voltage = horn * pdm->batt_volt;
+        pdm->out[2].voltage = out3 * pdm->batt_volt;
         pdm->out[2].status = (uint32_t)vn7004_get_status(&vn7.ic[0]);
 
         pdm->out[3].current = vn7004_get_cur(&vn4.ic[0]);
-        pdm->out[3].voltage = acc * pdm->batt_volt;
+        pdm->out[3].voltage = out4 * pdm->batt_volt;
         pdm->out[3].status = (uint32_t)vn7004_get_status(&vn4.ic[0]);
 
         pdm->out[4].current = vn7004_get_cur(&vn4.ic[1]);
-        pdm->out[4].voltage = light * pdm->batt_volt;
+        pdm->out[4].voltage = out5 * pdm->batt_volt;
         pdm->out[4].status = (uint32_t)vn7004_get_status(&vn4.ic[0]);
 
         pdm->out[5].current = vn_double_get_cur(&vn3);
-        pdm->out[5].voltage = trim_ctl < 0 ? -1 : trim_ctl * pdm->batt_volt;
+        pdm->out[5].voltage = out6 < 0 ? -out6 * pdm->batt_volt : out6 * pdm->batt_volt;
         pdm->out[5].status = (uint32_t)vn_double_get_status(&vn3);
 
         if (((tick - acc_off_time) > 5000) && (acc == 0)){
@@ -231,11 +235,19 @@ void StartCtlPDM(void const * argument) {
 
         if ((tick > 1000) || led_active){
             led_active = 1;
-            led_change_index(0, acc);
+            led_mode_t acc_led_mode = led_off;
+            if (over_voltage) {
+                acc_led_mode = led_flash_s;
+            } else if (acc) {
+                acc_led_mode = led_on;
+            }
+            led_change_index(0, acc_led_mode);
 
             // секция светодиода связи
             led_mode_t comm_led_mode = led_off;
-            if (pdm->can_fault == ENODEV) {
+            if (acc == 0) {
+                // nothink
+            } else if (pdm->can_fault == ENODEV) {
                 comm_led_mode = led_flash_l;
             } else if (pdm->can_fault == EFAULT) {
                 comm_led_mode = led_blink;
@@ -253,7 +265,9 @@ void StartCtlPDM(void const * argument) {
             }
 
             led_mode_t err_led_mode = led_off;
-            if (pdm->otp) {
+            if (acc == 0) {
+                // nothink
+            } else if (pdm->otp) {
                 err_led_mode = led_on;    
             } else if (ch_fault == EFAULT) {
                 comm_led_mode = led_flash_l;
