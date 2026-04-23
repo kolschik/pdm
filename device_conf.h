@@ -22,4 +22,5 @@
 #define MAX_FLASH 64
 
 #define BOOTLOADER_VERSION 0x11
-#define DEVNAME "pdm "
+#define DEVNAME "pdm"
+#define BOOT_ID 0x01

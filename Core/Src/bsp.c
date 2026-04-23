@@ -401,7 +401,7 @@ const uint32_t adc2_reg[] = {LL_ADC_CHANNEL_8};
 const uint32_t adc1_inj[] = {LL_ADC_CHANNEL_3, LL_ADC_CHANNEL_7, LL_ADC_CHANNEL_6, LL_ADC_CHANNEL_5};
 const uint32_t adc2_inj[] = {LL_ADC_CHANNEL_4, LL_ADC_CHANNEL_0, LL_ADC_CHANNEL_8};
 
-const adc_t adc1 = {
+adc_t adc1 = {
     .reg_channels = adc1_reg,
     .reg_channels_num = sizeof(adc1_reg) / sizeof(adc1_reg[0]),
     .inj_channels = adc1_inj,
@@ -412,7 +412,7 @@ const adc_t adc1 = {
     .a = ADC1
 };
 
-const adc_t adc2 = {
+adc_t adc2 = {
     .reg_channels = adc2_reg,
     .reg_channels_num = sizeof(adc2_reg) / sizeof(adc2_reg[0]),
     .inj_channels = adc2_inj,
