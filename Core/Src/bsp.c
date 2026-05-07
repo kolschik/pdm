@@ -2,6 +2,7 @@
 #include "app.h"
 #include "can.h"
 #if !defined PDM_BOOT
+#include "wdg.h"
 #include "app.h"
 #endif
 
@@ -583,6 +584,7 @@ int bsp_init(){
     tim_set_freq(&tim1, 500);
     tim_enable(&tim1);
 
+    wdg_init();
     led_init(&led);
     can_init(&can1);
     can_start();

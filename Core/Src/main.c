@@ -82,7 +82,7 @@ int main(void) {
     can_start();
     try_boot();
 #else
-
+    __enable_irq();
     if (bsp_init()){
         while(1);
     }
@@ -147,8 +147,8 @@ void SystemClock_Config(void)
   }
   LL_SetSystemCoreClock(48000000);
 #if defined PDM_BOOT
-  LL_SetSystemCoreClock(8000000);
-  LL_Init1msTick(8000000);
+  LL_SetSystemCoreClock(48000000);
+  LL_Init1msTick(48000000);
 #else
   //LL_Init1msTick(48000000);
    /* Update the time base */
