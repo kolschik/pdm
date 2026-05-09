@@ -8,6 +8,7 @@
 #include "stm32f1xx_ll_rtc.h"
 #include "led.h"
 #include "tm.h"
+#include "wdg.h"
 
 osThreadId CtlPDMHandle;
 osThreadId CANTaskHandle;
@@ -280,7 +281,7 @@ void StartCtlPDM(void const * argument) {
         }
 
 
-
+        wdg_reset();
         if (permit_sleep) {
             sleep();
         }
