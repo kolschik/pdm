@@ -38,7 +38,16 @@ const gpio_t gpio_a[] = {
             .pull = LL_GPIO_PULL_DOWN,
             .init_val = 0
         }
-    }
+    },
+    {   .port = LED2_GPIO_Port,
+        .pin = LED2_Pin,
+        .cfg = {
+            .mode = LL_GPIO_MODE_OUTPUT,
+            .open_drain = LL_GPIO_OUTPUT_PUSHPULL,
+            .freq = LL_GPIO_SPEED_FREQ_HIGH, 
+            .pull = LL_GPIO_PULL_DOWN,
+            .init_val = 0
+        }}
 };
 
 extern can_t can1;
@@ -72,7 +81,7 @@ int main(void) {
     __HAL_RCC_AFIO_CLK_ENABLE();
     __HAL_AFIO_REMAP_SWJ_NOJTAG();
 	  __disable_irq(); // запрещаем прерывания  
-    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA | LL_APB2_GRP1_PERIPH_GPIOB);
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA | LL_APB2_GRP1_PERIPH_GPIOB | LL_APB2_GRP1_PERIPH_GPIOC);
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);  
 
     gpio_init(gpio_a, sizeof(gpio_a) / sizeof(gpio_t));
