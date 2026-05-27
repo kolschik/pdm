@@ -9,6 +9,7 @@
 #include "led.h"
 #include "tm.h"
 #include "wdg.h"
+#include "boot.h"
 
 osThreadId CtlPDMHandle;
 osThreadId CANTaskHandle;
@@ -339,31 +340,45 @@ static void nmea_sender(void const * argument){
             tN2kMsg_t rx_msg;
             uint32_t tick = xTaskGetTickCount();
             CanIdToN2k(rx_fifo.id, &rx_msg);
-            if ((rx_msg.PGN == 127502L) && (rx_msg.Source == (0xff & ('k'+ 'e' + 'y' + 'p'+ 'a'+ 'd')))){
+            if (rx_msg.Destination == 0xFF) {
                 memcpy (rx_msg.Data, rx_fifo.data8, 8); 
-                tN2kOnOff sw[28];
-                uint8_t bank;
-                ParseN2kPGN127502(&rx_msg, sw, &bank);
-                if (bank == KEYPAD_BANK){
-                    for (uint32_t i=0; i<(sizeof(pdm->sw) / sizeof(pdm->sw[0])); i++){
-                        pdm->sw[i].status = sw[i] < N2kOnOff_Error ? sw[i] : -1;
-                        pdm->sw[i].update = tick;                    
+                if ((rx_msg.PGN == 127502L) && (rx_msg.Source == (0xff & ('k'+ 'e' + 'y' + 'p'+ 'a'+ 'd')))){
+                    tN2kOnOff sw[28];
+                    uint8_t bank;
+                    ParseN2kPGN127502(&rx_msg, sw, &bank);
+                    if (bank == KEYPAD_BANK){
+                        for (uint32_t i=0; i<(sizeof(pdm->sw) / sizeof(pdm->sw[0])); i++){
+                            pdm->sw[i].status = sw[i] < N2kOnOff_Error ? sw[i] : -1;
+                            pdm->sw[i].update = tick;                    
+                        }
                     }
-                }
 
-            }
-            if ((rx_msg.PGN == 127501L) && (rx_msg.Source == 25)){
-                memcpy (rx_msg.Data, rx_fifo.data8, 8); 
-                tN2kOnOff sw[28];
-                uint8_t bank;
-                ParseN2kPGN127501(&rx_msg, sw, &bank);
-                if (bank == TRIM_BANK){
-                    for (uint32_t i=0; i<(sizeof(pdm->trim_sw) / sizeof(pdm->trim_sw[0])); i++){
-                        pdm->trim_sw[i].status = sw[i] < N2kOnOff_Error ? sw[i] : -1;
-                        pdm->trim_sw[i].update = tick;                    
-                    }
                 }
-            }            
+                if ((rx_msg.PGN == 127501L) && (rx_msg.Source == 25)){
+                    tN2kOnOff sw[28];
+                    uint8_t bank;
+                    ParseN2kPGN127501(&rx_msg, sw, &bank);
+                    if (bank == TRIM_BANK){
+                        for (uint32_t i=0; i<(sizeof(pdm->trim_sw) / sizeof(pdm->trim_sw[0])); i++){
+                            pdm->trim_sw[i].status = sw[i] < N2kOnOff_Error ? sw[i] : -1;
+                            pdm->trim_sw[i].update = tick;                    
+                        }
+                    }
+                }     
+            } else if (rx_msg.Destination == nmea_get_source()) {
+                if (rx_msg.PGN == 256){
+                    memcpy (rx_msg.Data, rx_fifo.data8, 8); 
+                    union {
+                        uint8_t data8[8];
+                        uint32_t data32[4];
+                    } u_rx;
+
+                    ParseN2kPGN256(&rx_msg, u_rx.data8);
+                    if ((BOOT_KEY1_NMEA == u_rx.data32[0]) && (BOOT_KEY2_NMEA == u_rx.data32[1])) {
+                        jump_to_boot();
+                    }
+                }    
+            }
         }
         if (pdm->acc == 0){
             continue;

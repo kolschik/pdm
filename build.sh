@@ -13,7 +13,7 @@ mkdir bin
 
 cd $BUILD_DIR && cmake -DCMAKE_BUILD_TYPE=Debug-bootloader .. && make -j
 cp -fr pdm_boot.bin ../bin/ && cd ..
-# rm -R $BUILD_DIR/*
+rm -R $BUILD_DIR/*
 
-# cd $BUILD_DIR && cmake -DCMAKE_BUILD_TYPE=Release-loader .. && make -j
-# cp -fr pdm.bin ../bin/ && cd ..
+cd $BUILD_DIR && cmake -DCMAKE_BUILD_TYPE=Release-loader .. && make -j
+cp -fr pdm.bin ../bin/ && cd ..
