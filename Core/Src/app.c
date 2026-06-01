@@ -374,7 +374,7 @@ static void nmea_sender(void const * argument){
                     } u_rx;
 
                     ParseN2kPGN256(&rx_msg, u_rx.data8);
-                    if ((BOOT_KEY1_NMEA == u_rx.data32[0]) && (BOOT_KEY2_NMEA == u_rx.data32[1])) {
+                    if ((BOOT_KEY1 == u_rx.data32[0]) && (BOOT_KEY2 == u_rx.data32[1])) {
                         jump_to_boot();
                     }
                 }    
